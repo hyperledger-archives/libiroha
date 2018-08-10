@@ -37,28 +37,23 @@ add_library(shared_model_interfaces
     queries/impl/blocks_query.cpp
     queries/impl/query_payload_meta.cpp
     common_objects/impl/amount.cpp
+    query_responses/impl/account_asset_response.cpp
+    query_responses/impl/account_detail_response.cpp
+    query_responses/impl/account_response.cpp
+    query_responses/impl/asset_response.cpp
+    query_responses/impl/error_query_response.cpp
+    query_responses/impl/query_response.cpp
+    query_responses/impl/role_permissions.cpp
+    query_responses/impl/roles_response.cpp
+    query_responses/impl/signatories_response.cpp
+    query_responses/impl/transactions_response.cpp
+    query_responses/impl/block_error_response.cpp
+    query_responses/impl/block_query_response.cpp
+    query_responses/impl/block_response.cpp
+    iroha_internal/block_variant.cpp
+    iroha_internal/transaction_sequence.cpp
+    iroha_internal/transaction_batch.cpp
     )
-
-if (IROHA_ROOT_PROJECT)
-  target_sources(shared_model_interfaces PRIVATE
-      query_responses/impl/account_asset_response.cpp
-      query_responses/impl/account_detail_response.cpp
-      query_responses/impl/account_response.cpp
-      query_responses/impl/asset_response.cpp
-      query_responses/impl/error_query_response.cpp
-      query_responses/impl/query_response.cpp
-      query_responses/impl/role_permissions.cpp
-      query_responses/impl/roles_response.cpp
-      query_responses/impl/signatories_response.cpp
-      query_responses/impl/transactions_response.cpp
-      query_responses/impl/block_error_response.cpp
-      query_responses/impl/block_query_response.cpp
-      query_responses/impl/block_response.cpp
-      iroha_internal/block_variant.cpp
-      iroha_internal/transaction_sequence.cpp
-      iroha_internal/transaction_batch.cpp
-      )
-endif ()
 
 target_link_libraries(shared_model_interfaces
     shared_model_cryptography
