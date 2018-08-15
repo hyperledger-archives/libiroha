@@ -55,8 +55,8 @@ add_library(shared_model_interfaces
     iroha_internal/transaction_batch.cpp
     )
 
-target_link_libraries(shared_model_interfaces
+target_link_libraries(shared_model_interfaces PUBLIC
     shared_model_cryptography
     schema
-    Boost::boost
+    boost
     )
