@@ -41,7 +41,6 @@ add_library(shared_model_proto_backend
     queries/impl/proto_query_payload_meta.cpp
     )
 
-if (IROHA_ROOT_PROJECT)
   target_sources(shared_model_proto_backend PRIVATE
       query_responses/impl/proto_account_asset_response.cpp
       query_responses/impl/proto_account_detail_response.cpp
@@ -57,7 +56,6 @@ if (IROHA_ROOT_PROJECT)
       query_responses/impl/proto_block_response.cpp
       query_responses/impl/proto_block_error_response.cpp
       )
-endif ()
 
 target_link_libraries(shared_model_proto_backend
     schema

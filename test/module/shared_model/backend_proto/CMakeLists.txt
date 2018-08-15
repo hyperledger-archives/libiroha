@@ -48,16 +48,14 @@ target_link_libraries(shared_proto_queries_test
     shared_model_stateless_validation
     )
 
-if (IROHA_ROOT_PROJECT)
-  addtest(shared_proto_query_responses_test
-      shared_proto_query_responses_test.cpp
-      )
-  target_link_libraries(shared_proto_query_responses_test
-      shared_model_proto_backend
-      shared_model_stateless_validation
-      shared_model_cryptography
-      )
-endif ()
+addtest(shared_proto_query_responses_test
+    shared_proto_query_responses_test.cpp
+    )
+target_link_libraries(shared_proto_query_responses_test
+    shared_model_proto_backend
+    shared_model_stateless_validation
+    shared_model_cryptography
+    )
 
 addtest(shared_proto_util_test
     shared_proto_util_test.cpp

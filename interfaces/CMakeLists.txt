@@ -58,5 +58,5 @@ add_library(shared_model_interfaces
 target_link_libraries(shared_model_interfaces
     shared_model_cryptography
     schema
-    ${Boost_LIBRARIES}
+    Boost::boost
     )
