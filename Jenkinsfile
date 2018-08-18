@@ -23,8 +23,8 @@ pipeline {
     CCACHE_RELEASE_DIR = '/opt/.ccache-release'
     SORABOT_TOKEN = credentials('SORABOT_TOKEN')
     SONAR_TOKEN = credentials('SONAR_TOKEN')
-    GIT_RAW_BASE_URL = "https://raw.githubusercontent.com/hyperledger/libiroha"
-    DOCKER_REGISTRY_BASENAME = "hyperledger/libiroha"
+    GIT_RAW_BASE_URL = "https://raw.githubusercontent.com/hyperledger/iroha"
+    DOCKER_REGISTRY_BASENAME = "hyperledger/iroha"
 
     IROHA_NETWORK = "iroha-0${CHANGE_ID}-${GIT_COMMIT}-${BUILD_NUMBER}"
     IROHA_POSTGRES_HOST = "pg-0${CHANGE_ID}-${GIT_COMMIT}-${BUILD_NUMBER}"
