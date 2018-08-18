@@ -1,22 +1,21 @@
 properties([parameters([
-  booleanParam(defaultValue: false, description: 'Build `bindings`', name: 'bindings'),
+  booleanParam(defaultValue: true, description: 'Build `bindings`', name: 'bindings'),
   booleanParam(defaultValue: true, description: '', name: 'x86_64_linux'),
   booleanParam(defaultValue: false, description: '', name: 'armv7_linux'),
   booleanParam(defaultValue: false, description: '', name: 'armv8_linux'),
   booleanParam(defaultValue: true, description: '', name: 'x86_64_macos'),
-  booleanParam(defaultValue: false, description: '', name: 'x86_64_win'),
-  booleanParam(defaultValue: false, description: 'Build Java bindings', name: 'JavaBindings'),
+  booleanParam(defaultValue: true, description: '', name: 'x86_64_win'),
+  booleanParam(defaultValue: true, description: 'Build Java bindings', name: 'JavaBindings'),
   choice(choices: 'Release\nDebug', description: 'Java bindings build type', name: 'JBBuildType'),
   string(defaultValue: 'jp.co.soramitsu.iroha', description: 'Java bindings package name', name: 'JBPackageName'),
-  booleanParam(defaultValue: false, description: 'Build Python bindings', name: 'PythonBindings'),
+  booleanParam(defaultValue: true, description: 'Build Python bindings', name: 'PythonBindings'),
   choice(choices: 'Release\nDebug', description: 'Python bindings build type', name: 'PBBuildType'),
   choice(choices: 'python3\npython2', description: 'Python bindings version', name: 'PBVersion'),
-  booleanParam(defaultValue: false, description: 'Build Android bindings', name: 'AndroidBindings'),
+  booleanParam(defaultValue: true, description: 'Build Android bindings', name: 'AndroidBindings'),
   choice(choices: '26\n25\n24\n23\n22\n21\n20\n19\n18\n17\n16\n15\n14', description: 'Android Bindings ABI Version', name: 'ABABIVersion'),
   choice(choices: 'Release\nDebug', description: 'Android bindings build type', name: 'ABBuildType'),
   choice(choices: 'arm64-v8a\narmeabi-v7a\narmeabi\nx86_64\nx86', description: 'Android bindings platform', name: 'ABPlatform'),
   string(defaultValue: '4', description: 'How much parallelism should we exploit. "4" is optimal for machines with modest amount of memory and at least 4 cores', name: 'PARALLELISM')])])
-
 
 pipeline {
   environment {
@@ -24,8 +23,8 @@ pipeline {
     CCACHE_RELEASE_DIR = '/opt/.ccache-release'
     SORABOT_TOKEN = credentials('SORABOT_TOKEN')
     SONAR_TOKEN = credentials('SONAR_TOKEN')
-    GIT_RAW_BASE_URL = "https://raw.githubusercontent.com/hyperledger/iroha"
-    DOCKER_REGISTRY_BASENAME = "hyperledger/iroha"
+    GIT_RAW_BASE_URL = "https://raw.githubusercontent.com/hyperledger/libiroha"
+    DOCKER_REGISTRY_BASENAME = "hyperledger/libiroha"
 
     IROHA_NETWORK = "iroha-0${CHANGE_ID}-${GIT_COMMIT}-${BUILD_NUMBER}"
     IROHA_POSTGRES_HOST = "pg-0${CHANGE_ID}-${GIT_COMMIT}-${BUILD_NUMBER}"
@@ -52,7 +51,7 @@ pipeline {
             CHANGE_BRANCH_LOCAL = env.CHANGE_BRANCH
           }
           catch(MissingPropertyException e) { }
-          if (GIT_LOCAL_BRANCH != "develop" && CHANGE_BRANCH_LOCAL != "develop") {
+          if (env.GIT_LOCAL_BRANCH != "develop" && env.CHANGE_BRANCH_LOCAL != "develop") {
             def builds = load ".jenkinsci/cancel-builds-same-job.groovy"
             builds.cancelSameJobBuilds()
           }

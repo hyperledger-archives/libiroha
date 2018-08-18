@@ -19,7 +19,7 @@ def buildOptionsString(options) {
 
 def dockerPullOrUpdate(imageName, currentDockerfileURL, previousDockerfileURL, referenceDockerfileURL, buildOptions=null) {
   buildOptions = buildOptionsString(buildOptions)
-  def commit = sh(script: "echo ${GIT_LOCAL_BRANCH} | md5sum | cut -c 1-8", returnStdout: true).trim()
+  def commit = sh(script: "echo ${env.GIT_LOCAL_BRANCH} | md5sum | cut -c 1-8", returnStdout: true).trim()
   if (remoteFilesDiffer(currentDockerfileURL, previousDockerfileURL)) {
     // Dockerfile has been changed compared to the previous commit
     // Worst case scenario. We cannot count on the local cache
@@ -46,7 +46,7 @@ def dockerPullOrUpdate(imageName, currentDockerfileURL, previousDockerfileURL, r
       }
     }
   }
-  if (GIT_LOCAL_BRANCH ==~ /develop|master/ || CHANGE_BRANCH_LOCAL == 'develop') {
+  if (env.GIT_LOCAL_BRANCH ==~ /develop|master/ || CHANGE_BRANCH_LOCAL == 'develop') {
     docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
       iC.push(imageName)
     }
