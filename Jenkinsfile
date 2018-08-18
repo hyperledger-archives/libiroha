@@ -80,7 +80,7 @@ pipeline {
               def dPullOrBuild = load ".jenkinsci/docker-pull-or-build.groovy"
               def platform = sh(script: 'uname -m', returnStdout: true).trim()
               if (params.JavaBindings || params.PythonBindings) {
-                def iC = docker.image("${DOCKER_REGISTRY_BASENAME}")
+                def iC = docker.image("${DOCKER_REGISTRY_BASENAME}:${platform}-develop-build")
                 // def iC = dPullOrBuild.dockerPullOrUpdate(
                 //   "$platform-develop-build",
                 //   "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/Dockerfile",
@@ -99,7 +99,7 @@ pipeline {
                 }
               }
               if (params.AndroidBindings) {
-                def iC = docker.image("${DOCKER_REGISTRY_BASENAME}")
+                def iC = docker.image("${DOCKER_REGISTRY_BASENAME}:android-${params.ABPlatform}-${params.ABBuildType}")
                 // def iC = dPullOrBuild.dockerPullOrUpdate(
                 //   "android-${params.ABPlatform}-${params.ABBuildType}",
                 //   "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/android/Dockerfile",
