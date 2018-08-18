@@ -80,7 +80,7 @@ pipeline {
               def dPullOrBuild = load ".jenkinsci/docker-pull-or-build.groovy"
               def platform = sh(script: 'uname -m', returnStdout: true).trim()
               if (params.JavaBindings || params.PythonBindings) {
-                def iC = docker.image("${DOCKER_REGISTRY_BASENAME}:${$platform}-develop-build"
+                def iC = docker.image("${DOCKER_REGISTRY_BASENAME}:${$platform}-develop-build")
                 if (params.JavaBindings) {
                   iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
                     bindings.doJavaBindings('linux', params.JBPackageName, params.JBBuildType)
