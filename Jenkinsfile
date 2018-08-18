@@ -80,7 +80,12 @@ pipeline {
               def dPullOrBuild = load ".jenkinsci/docker-pull-or-build.groovy"
               def platform = sh(script: 'uname -m', returnStdout: true).trim()
               if (params.JavaBindings || params.PythonBindings) {
-                def iC = docker.image("${DOCKER_REGISTRY_BASENAME}:${$platform}-develop-build")
+                def iC = dPullOrBuild.dockerPullOrUpdate(
+                  "$platform-develop-build",
+                  "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/Dockerfile",
+                  "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/Dockerfile",
+                  "${env.GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
+                  ['PARALLELISM': params.PARALLELISM])
                 if (params.JavaBindings) {
                   iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
                     bindings.doJavaBindings('linux', params.JBPackageName, params.JBBuildType)
@@ -93,7 +98,12 @@ pipeline {
                 }
               }
               if (params.AndroidBindings) {
-                def iC = docker.image("${DOCKER_REGISTRY_BASENAME}:android-${params.ABPlatform}-${params.ABBuildType}")
+                def iC = dPullOrBuild.dockerPullOrUpdate(
+                  "android-${params.ABPlatform}-${params.ABBuildType}",
+                  "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/android/Dockerfile",
+                  "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/android/Dockerfile",
+                  "${env.GIT_RAW_BASE_URL}/develop/docker/android/Dockerfile",
+                  ['PARALLELISM': params.PARALLELISM, 'PLATFORM': params.ABPlatform, 'BUILD_TYPE': params.ABBuildType])
                 sh "curl -L -o /tmp/${env.GIT_COMMIT}/entrypoint.sh ${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/android/entrypoint.sh"
                 sh "chmod +x /tmp/${env.GIT_COMMIT}/entrypoint.sh"
                 iC.inside("-v /tmp/${env.GIT_COMMIT}/entrypoint.sh:/entrypoint.sh:ro -v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
