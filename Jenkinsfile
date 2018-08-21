@@ -106,9 +106,9 @@ pipeline {
                 //   "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/android/Dockerfile",
                 //   "${env.GIT_RAW_BASE_URL}/develop/docker/android/Dockerfile",
                 //   ['PARALLELISM': params.PARALLELISM, 'PLATFORM': params.ABPlatform, 'BUILD_TYPE': params.ABBuildType])
-                sh "curl -L -o /tmp/${env.GIT_COMMIT}/entrypoint.sh ${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/android/entrypoint.sh"
-                sh "chmod +x /tmp/${env.GIT_COMMIT}/entrypoint.sh"
                 iC.inside("-v /tmp/${env.GIT_COMMIT}/entrypoint.sh:/entrypoint.sh:ro -v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
+                  sh "curl -L -o /entrypoint.sh ${env.GIT_RAW_BASE_URL}/master/docker/android/entrypoint.sh"
+                  sh "chmod +x /entrypoint.sh"
                   bindings.doAndroidBindings(params.ABABIVersion)
                 }
               }
