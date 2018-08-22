@@ -109,7 +109,7 @@ def doAndroidBindings(abiVersion) {
     [currentPath, "\$PLATFORM", abiVersion, "\$BUILD_TYPE_A", sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)])
 
   sh """
-    /entrypoint.sh; \
+    . docker/android/entrypoint.sh; \
     sed -i.bak "s~find_package(JNI REQUIRED)~SET(CMAKE_SWIG_FLAGS \\\${CMAKE_SWIG_FLAGS} -package \${PACKAGE})~" bindings/CMakeLists.txt; \
     # TODO: might not be needed in the future
     sed -i.bak "/target_include_directories(\\\${SWIG_MODULE_irohajava_REAL_NAME} PUBLIC/,+3d" bindings/CMakeLists.txt; \
