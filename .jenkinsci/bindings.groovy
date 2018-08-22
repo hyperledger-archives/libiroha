@@ -118,7 +118,7 @@ def doAndroidBindings(abiVersion) {
     sed -i.bak "s~find_program(protoc_EXECUTABLE protoc~set(protoc_EXECUTABLE \"/protobuf/host_build/protoc\"~" cmake/Modules/Findprotobuf.cmake; \
     cmake . -Bbuild -DCMAKE_SYSTEM_NAME=Android -DCMAKE_SYSTEM_VERSION=$abiVersion -DCMAKE_ANDROID_ARCH_ABI=\$PLATFORM \
       -DANDROID_NDK=\$NDK_PATH -DCMAKE_ANDROID_STL_TYPE=c++_static -DCMAKE_BUILD_TYPE=\$BUILD_TYPE_A -DTESTING=OFF \
-      -DSWIG_JAVA=ON -DCMAKE_PREFIX_PATH=\$DEPS_DIR
+      -DSWIG_JAVA=ON -DCMAKE_PREFIX_PATH=dependencies
     """
   sh "cmake --build build --target irohajava -- -j${params.PARALLELISM}"
   sh "zip -j $artifactsPath build/bindings/*.java build/bindings/libirohajava.so"
