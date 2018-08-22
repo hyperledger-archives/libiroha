@@ -86,7 +86,7 @@ pipeline {
               }
               if (params.AndroidBindings) {
                 iC = docker.build("${env.DOCKER_REGISTRY_BASENAME}:${env.GIT_COMMIT}-${BUILD_NUMBER}", "--no-cache .")
--               iC = docker.image("${env.DOCKER_REGISTRY_BASENAME}:${env.GIT_COMMIT}-${BUILD_NUMBER}")
+                iC = docker.image("${env.DOCKER_REGISTRY_BASENAME}:${env.GIT_COMMIT}-${BUILD_NUMBER}")
                 // def iC = docker.image("${env.DOCKER_REGISTRY_BASENAME}:android-${params.ABPlatform}-${params.ABBuildType}")
                 // sh "mkdir -p /tmp/${env.GIT_COMMIT}"
                 // sh "curl -L -o /tmp/${env.GIT_COMMIT}/entrypoint.sh ${env.GIT_RAW_BASE_URL}/master/docker/android/entrypoint.sh"
