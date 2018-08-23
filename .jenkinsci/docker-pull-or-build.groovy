@@ -19,38 +19,38 @@ def buildOptionsString(options) {
 
 def dockerPullOrUpdate(imageName, currentDockerfileURL, previousDockerfileURL, referenceDockerfileURL, buildOptions=null) {
   buildOptions = buildOptionsString(buildOptions)
-  def commit = sh(script: "echo ${GIT_LOCAL_BRANCH} | md5sum | cut -c 1-8", returnStdout: true).trim()
+  def commit = sh(script: "echo ${env.GIT_LOCAL_BRANCH} | md5sum | cut -c 1-8", returnStdout: true).trim()
   if (remoteFilesDiffer(currentDockerfileURL, previousDockerfileURL)) {
     // Dockerfile has been changed compared to the previous commit
     // Worst case scenario. We cannot count on the local cache
     // because Dockerfile may contain apt-get entries that would try to update
     // from invalid (stale) addresses
-    iC = docker.build("${DOCKER_REGISTRY_BASENAME}:${commit}-${BUILD_NUMBER}", "${buildOptions} --no-cache -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
+    iC = docker.build("${env.DOCKER_REGISTRY_BASENAME}:${commit}-${env.BUILD_NUMBER}", "${buildOptions} --no-cache -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
   }
   else {
     // first commit in this branch or Dockerfile modified
     if (remoteFilesDiffer(currentDockerfileURL, referenceDockerfileURL)) {
       // if we're lucky to build on the same agent, image will be built using cache
-      iC = docker.build("${DOCKER_REGISTRY_BASENAME}:${commit}-${BUILD_NUMBER}", "$buildOptions -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
+      iC = docker.build("${env.DOCKER_REGISTRY_BASENAME}:${commit}-${env.BUILD_NUMBER}", "${buildOptions} -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
     }
     else {
       // try pulling image from Dockerhub, probably image is already there
-      def testExitCode = sh(script: "docker pull ${DOCKER_REGISTRY_BASENAME}:${imageName}", returnStatus: true)
+      def testExitCode = sh(script: "docker pull ${env.DOCKER_REGISTRY_BASENAME}:${imageName}", returnStatus: true)
       if (testExitCode != 0) {
         // image does not (yet) exist on Dockerhub. Build it
-        iC = docker.build("${DOCKER_REGISTRY_BASENAME}:${commit}-${BUILD_NUMBER}", "$buildOptions --no-cache -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
+        iC = docker.build("${env.DOCKER_REGISTRY_BASENAME}:${commit}-${env.BUILD_NUMBER}", "$buildOptions --no-cache -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
       }
       else {
         // no difference found compared to both previous and reference Dockerfile
-        iC = docker.image("${DOCKER_REGISTRY_BASENAME}:${imageName}")
+        iC = docker.image("${env.DOCKER_REGISTRY_BASENAME}:${imageName}")
       }
     }
   }
-  if (GIT_LOCAL_BRANCH ==~ /develop|master/ || CHANGE_BRANCH_LOCAL == 'develop') {
-    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
-      iC.push(imageName)
-    }
-  }
+//   if (GIT_LOCAL_BRANCH ==~ /develop|master/ || CHANGE_BRANCH_LOCAL == 'develop') {
+//     docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+//       iC.push(imageName)
+//     }
+//   }
   return iC
 }
 

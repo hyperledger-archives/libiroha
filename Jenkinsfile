@@ -70,6 +70,7 @@ pipeline {
           steps {
             script {
               def bindings = load ".jenkinsci/bindings.groovy"
+              def dPullOrBuild = load ".jenkinsci/docker-pull-or-build.groovy"
               def platform = sh(script: 'uname -m', returnStdout: true).trim()
               if (params.JavaBindings || params.PythonBindings) {
                 def iC = docker.image("${DOCKER_REGISTRY_BASENAME}:${platform}-develop-build")
