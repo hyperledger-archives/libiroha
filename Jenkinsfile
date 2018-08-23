@@ -22,8 +22,8 @@ pipeline {
     CCACHE_DIR = '/opt/.ccache'
     CCACHE_RELEASE_DIR = '/opt/.ccache-release'
     SORABOT_TOKEN = credentials('SORABOT_TOKEN')
-    GIT_RAW_BASE_URL = "https://raw.githubusercontent.com/hyperledger/iroha"
-    DOCKER_REGISTRY_BASENAME = "hyperledger/iroha"
+    GIT_RAW_BASE_URL = "https://raw.githubusercontent.com/hyperledger/libiroha"
+    DOCKER_REGISTRY_BASENAME = "hyperledger/libiroha"
     CHANGE_BRANCH_LOCAL = ''
   }
 
@@ -85,12 +85,12 @@ pipeline {
                 }
               }
               if (params.AndroidBindings) {
-                iC = docker.build("${env.DOCKER_REGISTRY_BASENAME}:${env.GIT_COMMIT}-${BUILD_NUMBER}", "--no-cache .")
-                iC = docker.image("${env.DOCKER_REGISTRY_BASENAME}:${env.GIT_COMMIT}-${BUILD_NUMBER}")
-                // def iC = docker.image("${env.DOCKER_REGISTRY_BASENAME}:android-${params.ABPlatform}-${params.ABBuildType}")
-                // sh "mkdir -p /tmp/${env.GIT_COMMIT}"
-                // sh "curl -L -o /tmp/${env.GIT_COMMIT}/entrypoint.sh ${env.GIT_RAW_BASE_URL}/master/docker/android/entrypoint.sh"
-                // sh "chmod +x /tmp/${env.GIT_COMMIT}/entrypoint.sh"
+                def iC = dPullOrBuild.dockerPullOrUpdate(
+                  "android-${params.ABPlatform}-${params.ABBuildType}",
+                  "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/android/Dockerfile",
+                  "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/android/Dockerfile",
+                  "${env.GIT_RAW_BASE_URL}/develop/docker/android/Dockerfile",
+                  ['PARALLELISM': params.PARALLELISM, 'PLATFORM': params.ABPlatform, 'BUILD_TYPE': params.ABBuildType])
                 iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
                   bindings.doAndroidBindings(params.ABABIVersion)
                 }
