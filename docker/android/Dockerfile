@@ -14,7 +14,7 @@ ENV PACKAGE=${PACKAGE:-jp.co.soramitsu.iroha.android}
 ARG PLATFORM
 ENV PLATFORM=${PLATFORM:-x86_64}
 ENV NDK_PATH="/android-ndk/android-ndk-r16b"
-ENV DEPS_DIR="dependencies"
+ENV DEPS_DIR="./dependencies"
 
 RUN apt-get update && \
     apt-get -y install --no-install-recommends git curl apt-utils software-properties-common libpthread-stubs0-dev libpcre3-dev \
