@@ -46,11 +46,11 @@ def dockerPullOrUpdate(imageName, currentDockerfileURL, previousDockerfileURL, r
       }
     }
   }
-//   if (GIT_LOCAL_BRANCH ==~ /develop|master/ || CHANGE_BRANCH_LOCAL == 'develop') {
-//     docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
-//       iC.push(imageName)
-//     }
-//   }
+  if (GIT_LOCAL_BRANCH ==~ /develop|master/ || CHANGE_BRANCH_LOCAL == 'develop') {
+    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+      iC.push(imageName)
+    }
+  }
   return iC
 }
 

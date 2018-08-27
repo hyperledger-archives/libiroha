@@ -3,15 +3,15 @@ properties([parameters([
   booleanParam(defaultValue: true, description: '', name: 'x86_64_linux'),
   booleanParam(defaultValue: false, description: '', name: 'armv7_linux'),
   booleanParam(defaultValue: false, description: '', name: 'armv8_linux'),
-  booleanParam(defaultValue: true, description: '', name: 'x86_64_macos'),
-  booleanParam(defaultValue: true, description: '', name: 'x86_64_win'),
+  booleanParam(defaultValue: false, description: '', name: 'x86_64_macos'),
+  booleanParam(defaultValue: false, description: '', name: 'x86_64_win'),
   booleanParam(defaultValue: true, description: 'Build Java bindings', name: 'JavaBindings'),
   choice(choices: 'Release\nDebug', description: 'Java bindings build type', name: 'JBBuildType'),
   string(defaultValue: 'jp.co.soramitsu.iroha', description: 'Java bindings package name', name: 'JBPackageName'),
   booleanParam(defaultValue: true, description: 'Build Python bindings', name: 'PythonBindings'),
   choice(choices: 'Release\nDebug', description: 'Python bindings build type', name: 'PBBuildType'),
   choice(choices: 'python3\npython2', description: 'Python bindings version', name: 'PBVersion'),
-  booleanParam(defaultValue: true, description: 'Build Android bindings', name: 'AndroidBindings'),
+  booleanParam(defaultValue: false, description: 'Build Android bindings', name: 'AndroidBindings'),
   choice(choices: '26\n25\n24\n23\n22\n21\n20\n19\n18\n17\n16\n15\n14', description: 'Android Bindings ABI Version', name: 'ABABIVersion'),
   choice(choices: 'Release\nDebug', description: 'Android bindings build type', name: 'ABBuildType'),
   choice(choices: 'arm64-v8a\narmeabi-v7a\narmeabi\nx86_64\nx86', description: 'Android bindings platform', name: 'ABPlatform'),
@@ -22,8 +22,8 @@ pipeline {
     CCACHE_DIR = '/opt/.ccache'
     CCACHE_RELEASE_DIR = '/opt/.ccache-release'
     SORABOT_TOKEN = credentials('SORABOT_TOKEN')
-    GIT_RAW_BASE_URL = "https://raw.githubusercontent.com/hyperledger/libiroha"
-    DOCKER_REGISTRY_BASENAME = "hyperledger/libiroha"
+    GIT_RAW_BASE_URL = "https://raw.githubusercontent.com/hyperledger/iroha"
+    DOCKER_REGISTRY_BASENAME = "hyperledger/iroha"
     CHANGE_BRANCH_LOCAL = ''
   }
 
@@ -70,7 +70,6 @@ pipeline {
           steps {
             script {
               def bindings = load ".jenkinsci/bindings.groovy"
-              def dPullOrBuild = load ".jenkinsci/docker-pull-or-build.groovy"
               def platform = sh(script: 'uname -m', returnStdout: true).trim()
               if (params.JavaBindings || params.PythonBindings) {
                 def iC = docker.image("${DOCKER_REGISTRY_BASENAME}:${platform}-develop-build")
