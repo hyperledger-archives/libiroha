@@ -15,10 +15,10 @@ def doReleaseBuild() {
   }
   def platform = sh(script: 'uname -m', returnStdout: true).trim()
   sh "mkdir /tmp/${env.GIT_COMMIT}-${BUILD_NUMBER} || true"
-  iC = docker.image("${DOCKER_REGISTRY_BASENAME}:${platform}-develop-build")
+  iC = docker.image("${env.DOCKER_REGISTRY_BASENAME}:${platform}-develop-build")
   iC.pull()
   iC.inside(""
-    + " -v /tmp/${GIT_COMMIT}-${BUILD_NUMBER}:/tmp/${GIT_COMMIT}"
+    + " -v /tmp/${env.GIT_COMMIT}-${BUILD_NUMBER}:/tmp/${env.GIT_COMMIT}"
     + " -v /var/jenkins/ccache:${CCACHE_RELEASE_DIR}") {
 
     def scmVars = checkout scm
@@ -47,57 +47,57 @@ def doReleaseBuild() {
     sh "ccache --show-stats"
 
     // move build package to the volume
-    sh "mv ./build/iroha-*.deb /tmp/${GIT_COMMIT}/iroha.deb"
-    sh "mv ./build/*.tar.gz /tmp/${GIT_COMMIT}/iroha.tar.gz"
+    sh "mv ./build/iroha-*.deb /tmp/${env.GIT_COMMIT}/iroha.deb"
+    sh "mv ./build/*.tar.gz /tmp/${env.GIT_COMMIT}/iroha.tar.gz"
   }
 
   sh "curl -L -o /tmp/${env.GIT_COMMIT}/Dockerfile --create-dirs ${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/release/Dockerfile"
   sh "curl -L -o /tmp/${env.GIT_COMMIT}/entrypoint.sh ${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/release/entrypoint.sh"
-  sh "mv /tmp/${GIT_COMMIT}-${BUILD_NUMBER}/iroha.deb /tmp/${env.GIT_COMMIT}"
+  sh "mv /tmp/${env.GIT_COMMIT}-${env.BUILD_NUMBER}/iroha.deb /tmp/${env.GIT_COMMIT}"
   sh "chmod +x /tmp/${env.GIT_COMMIT}/entrypoint.sh"
-  iCRelease = docker.build("${DOCKER_REGISTRY_BASENAME}:${GIT_COMMIT}-${BUILD_NUMBER}-release", "--no-cache -f /tmp/${env.GIT_COMMIT}/Dockerfile /tmp/${env.GIT_COMMIT}")
+  iCRelease = docker.build("${env.DOCKER_REGISTRY_BASENAME}:${env.GIT_COMMIT}-${env.BUILD_NUMBER}-release", "--no-cache -f /tmp/${env.GIT_COMMIT}/Dockerfile /tmp/${env.GIT_COMMIT}")
 
   // push Docker image in case the current branch is develop,
   // or it is a commit into PR which base branch is develop (usually develop -> master)
-  if (GIT_LOCAL_BRANCH == 'develop' || CHANGE_BRANCH_LOCAL == 'develop') {
+  if (env.GIT_LOCAL_BRANCH == 'develop' || env.CHANGE_BRANCH_LOCAL == 'develop') {
     iCRelease.push("${platform}-develop")
     if (manifest.manifestSupportEnabled()) {
-      manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:develop",
-        ["${DOCKER_REGISTRY_BASENAME}:x86_64-develop",
-         "${DOCKER_REGISTRY_BASENAME}:armv7l-develop",
-         "${DOCKER_REGISTRY_BASENAME}:aarch64-develop"])
-      manifest.manifestAnnotate("${DOCKER_REGISTRY_BASENAME}:develop",
+      manifest.manifestCreate("${env.DOCKER_REGISTRY_BASENAME}:develop",
+        ["${env.DOCKER_REGISTRY_BASENAME}:x86_64-develop",
+         "${env.DOCKER_REGISTRY_BASENAME}:armv7l-develop",
+         "${env.DOCKER_REGISTRY_BASENAME}:aarch64-develop"])
+      manifest.manifestAnnotate("${env.DOCKER_REGISTRY_BASENAME}:develop",
         [
-          [manifest: "${DOCKER_REGISTRY_BASENAME}:x86_64-develop",
+          [manifest: "${env.DOCKER_REGISTRY_BASENAME}:x86_64-develop",
            arch: 'amd64', os: 'linux', osfeatures: [], variant: ''],
-          [manifest: "${DOCKER_REGISTRY_BASENAME}:armv7l-develop",
+          [manifest: "${env.DOCKER_REGISTRY_BASENAME}:armv7l-develop",
            arch: 'arm', os: 'linux', osfeatures: [], variant: 'v7'],
-          [manifest: "${DOCKER_REGISTRY_BASENAME}:aarch64-develop",
+          [manifest: "${env.DOCKER_REGISTRY_BASENAME}:aarch64-develop",
            arch: 'arm64', os: 'linux', osfeatures: [], variant: '']
         ])
       withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'login', passwordVariable: 'password')]) {
-        manifest.manifestPush("${DOCKER_REGISTRY_BASENAME}:develop", login, password)
+        manifest.manifestPush("${env.DOCKER_REGISTRY_BASENAME}:develop", login, password)
       }
     }
   }
-  else if (GIT_LOCAL_BRANCH == 'master') {
+  else if (env.GIT_LOCAL_BRANCH == 'master') {
     iCRelease.push("${platform}-latest")
     if (manifest.manifestSupportEnabled()) {
-      manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:latest",
-        ["${DOCKER_REGISTRY_BASENAME}:x86_64-latest",
-         "${DOCKER_REGISTRY_BASENAME}:armv7l-latest",
-         "${DOCKER_REGISTRY_BASENAME}:aarch64-latest"])
-      manifest.manifestAnnotate("${DOCKER_REGISTRY_BASENAME}:latest",
+      manifest.manifestCreate("${env.DOCKER_REGISTRY_BASENAME}:latest",
+        ["${env.DOCKER_REGISTRY_BASENAME}:x86_64-latest",
+         "${env.DOCKER_REGISTRY_BASENAME}:armv7l-latest",
+         "${env.DOCKER_REGISTRY_BASENAME}:aarch64-latest"])
+      manifest.manifestAnnotate("${env.DOCKER_REGISTRY_BASENAME}:latest",
         [
-          [manifest: "${DOCKER_REGISTRY_BASENAME}:x86_64-latest",
+          [manifest: "${env.DOCKER_REGISTRY_BASENAME}:x86_64-latest",
            arch: 'amd64', os: 'linux', osfeatures: [], variant: ''],
-          [manifest: "${DOCKER_REGISTRY_BASENAME}:armv7l-latest",
+          [manifest: "${env.DOCKER_REGISTRY_BASENAME}:armv7l-latest",
            arch: 'arm', os: 'linux', osfeatures: [], variant: 'v7'],
-          [manifest: "${DOCKER_REGISTRY_BASENAME}:aarch64-latest",
+          [manifest: "${env.DOCKER_REGISTRY_BASENAME}:aarch64-latest",
            arch: 'arm64', os: 'linux', osfeatures: [], variant: '']
         ])
       withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'login', passwordVariable: 'password')]) {
-        manifest.manifestPush("${DOCKER_REGISTRY_BASENAME}:latest", login, password)
+        manifest.manifestPush("${env.DOCKER_REGISTRY_BASENAME}:latest", login, password)
       }
     }
   }

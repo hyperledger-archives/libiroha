@@ -26,22 +26,22 @@ def doDebugBuild(coverageEnabled=false) {
                                            ['PARALLELISM': parallelism])
   // push Docker image in case the current branch is develop,
   // or it is a commit into PR which base branch is develop (usually develop -> master)
-  if ((GIT_LOCAL_BRANCH == 'develop' || CHANGE_BRANCH_LOCAL == 'develop') && manifest.manifestSupportEnabled()) {
-    manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:develop-build",
-      ["${DOCKER_REGISTRY_BASENAME}:x86_64-develop-build",
-       "${DOCKER_REGISTRY_BASENAME}:armv7l-develop-build",
-       "${DOCKER_REGISTRY_BASENAME}:aarch64-develop-build"])
-    manifest.manifestAnnotate("${DOCKER_REGISTRY_BASENAME}:develop-build",
+  if ((env.GIT_LOCAL_BRANCH == 'develop' || CHANGE_BRANCH_LOCAL == 'develop') && manifest.manifestSupportEnabled()) {
+    manifest.manifestCreate("${env.DOCKER_REGISTRY_BASENAME}:develop-build",
+      ["${env.DOCKER_REGISTRY_BASENAME}:x86_64-develop-build",
+       "${env.DOCKER_REGISTRY_BASENAME}:armv7l-develop-build",
+       "${env.DOCKER_REGISTRY_BASENAME}:aarch64-develop-build"])
+    manifest.manifestAnnotate("${env.DOCKER_REGISTRY_BASENAME}:develop-build",
       [
-        [manifest: "${DOCKER_REGISTRY_BASENAME}:x86_64-develop-build",
+        [manifest: "${env.DOCKER_REGISTRY_BASENAME}:x86_64-develop-build",
          arch: 'amd64', os: 'linux', osfeatures: [], variant: ''],
-        [manifest: "${DOCKER_REGISTRY_BASENAME}:armv7l-develop-build",
+        [manifest: "${env.DOCKER_REGISTRY_BASENAME}:armv7l-develop-build",
          arch: 'arm', os: 'linux', osfeatures: [], variant: 'v7'],
-        [manifest: "${DOCKER_REGISTRY_BASENAME}:aarch64-develop-build",
+        [manifest: "${env.DOCKER_REGISTRY_BASENAME}:aarch64-develop-build",
          arch: 'arm64', os: 'linux', osfeatures: [], variant: '']
       ])
     withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'login', passwordVariable: 'password')]) {
-      manifest.manifestPush("${DOCKER_REGISTRY_BASENAME}:develop-build", login, password)
+      manifest.manifestPush("${env.DOCKER_REGISTRY_BASENAME}:develop-build", login, password)
     }
   }
 
@@ -57,7 +57,7 @@ def doDebugBuild(coverageEnabled=false) {
       + " -e IROHA_POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD}"
       + " --network=${env.IROHA_NETWORK}"
       + " -v /var/jenkins/ccache:${CCACHE_DIR}"
-      + " -v /tmp/${GIT_COMMIT}-${BUILD_NUMBER}:/tmp/${GIT_COMMIT}") {
+      + " -v /tmp/${env.GIT_COMMIT}-${BUILD_NUMBER}:/tmp/${env.GIT_COMMIT}") {
 
       def scmVars = checkout scm
       def cmakeOptions = ""
@@ -99,7 +99,7 @@ def doDebugBuild(coverageEnabled=false) {
           sh """
             sonar-scanner \
               -Dsonar.github.disableInlineComments \
-              -Dsonar.github.repository='${DOCKER_REGISTRY_BASENAME}' \
+              -Dsonar.github.repository='${env.DOCKER_REGISTRY_BASENAME}' \
               -Dsonar.analysis.mode=preview \
               -Dsonar.login=${SONAR_TOKEN} \
               -Dsonar.projectVersion=${BUILD_TAG} \
