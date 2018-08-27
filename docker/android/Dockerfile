@@ -13,8 +13,8 @@ ENV PACKAGE=${PACKAGE:-jp.co.soramitsu.iroha.android}
 # valid platforms: armeabi, armeabi-v7a, arm64-v8a, x86, x86_64
 ARG PLATFORM
 ENV PLATFORM=${PLATFORM:-x86_64}
-ENV NDK_PATH="/android-ndk/android-ndk-r16b"
-ENV DEPS_DIR="./dependencies"
+ENV DEPS_DIR="/dependencies"
+ENV NDK_PATH="$DEPS_DIR/android-ndk-r16b"
 
 RUN apt-get update && \
     apt-get -y install --no-install-recommends git curl apt-utils software-properties-common libpthread-stubs0-dev libpcre3-dev \
@@ -30,7 +30,7 @@ RUN set -e; \
 
 # install android-ndk-r16b
 RUN set -e; \
-	curl -L -o /tmp/android-ndk.zip https://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip; unzip -q /tmp/android-ndk.zip -d /android-ndk; rm -f /tmp/android-ndk.zip
+	curl -L -o /tmp/android-ndk.zip https://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip; unzip -q /tmp/android-ndk.zip -d $DEPS_DIR/; rm -f /tmp/android-ndk.zip
 
 # protobuf
 RUN set -ex; \
