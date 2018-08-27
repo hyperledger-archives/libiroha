@@ -22,8 +22,8 @@ pipeline {
     CCACHE_DIR = '/opt/.ccache'
     CCACHE_RELEASE_DIR = '/opt/.ccache-release'
     SORABOT_TOKEN = credentials('SORABOT_TOKEN')
-    GIT_RAW_BASE_URL = "https://raw.githubusercontent.com/hyperledger/iroha"
-    DOCKER_REGISTRY_BASENAME = "hyperledger/iroha"
+    GIT_RAW_BASE_URL = "https://raw.githubusercontent.com/hyperledger/libiroha"
+    DOCKER_REGISTRY_BASENAME = "hyperledger/libiroha"
     CHANGE_BRANCH_LOCAL = ''
   }
 
@@ -72,7 +72,12 @@ pipeline {
               def bindings = load ".jenkinsci/bindings.groovy"
               def platform = sh(script: 'uname -m', returnStdout: true).trim()
               if (params.JavaBindings || params.PythonBindings) {
-                def iC = docker.image("${DOCKER_REGISTRY_BASENAME}:${platform}-develop-build")
+                def iC = dPullOrBuild.dockerPullOrUpdate(
+                  "$platform-develop-build",
+                  "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/Dockerfile",
+                  "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/Dockerfile",
+                  "${env.GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
+                  ['PARALLELISM': params.PARALLELISM])
                 if (params.JavaBindings) {
                   iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
                     bindings.doJavaBindings('linux', params.JBPackageName, params.JBBuildType)
