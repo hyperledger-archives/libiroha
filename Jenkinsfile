@@ -27,6 +27,12 @@ pipeline {
     SONAR_TOKEN = credentials('SONAR_TOKEN')
     GIT_RAW_BASE_URL = "https://raw.githubusercontent.com/hyperledger/libiroha"
     DOCKER_REGISTRY_BASENAME = "hyperledger/libiroha"
+
+    IROHA_NETWORK = "iroha-0${CHANGE_ID}-${env.GIT_COMMIT}-${BUILD_NUMBER}"
+    IROHA_POSTGRES_HOST = "pg-0${CHANGE_ID}-${env.GIT_COMMIT}-${BUILD_NUMBER}"
+    IROHA_POSTGRES_USER = "pguser${env.GIT_COMMIT}"
+    IROHA_POSTGRES_PASSWORD = "${env.GIT_COMMIT}"
+    IROHA_POSTGRES_PORT = 5432
     CHANGE_BRANCH_LOCAL = ''
   }
 
