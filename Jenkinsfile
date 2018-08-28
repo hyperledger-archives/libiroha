@@ -77,13 +77,7 @@ pipeline {
           steps {
             script {
               debugBuild = load ".jenkinsci/debug-build.groovy"
-              coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (coverage.selectedBranchesCoverage(['develop', 'master'])) {
-                debugBuild.doDebugBuild(true)
-              }
-              else {
-                debugBuild.doDebugBuild()
-              }
+              debugBuild.doDebugBuild()
               if (env.GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                 releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
@@ -107,13 +101,7 @@ pipeline {
           agent { label 'mac' }
           steps {
             script {
-              def coverageEnabled = false
               def cmakeOptions = ""
-              coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (!params.x86_64_linux && (coverage.selectedBranchesCoverage(['develop', 'master']))) {
-                coverageEnabled = true
-                cmakeOptions = " -DCOVERAGE=ON "
-              }
               def scmVars = checkout scm
               env.IROHA_VERSION = "0x${scmVars.GIT_COMMIT}"
               env.IROHA_HOME = "/opt/iroha"
@@ -136,9 +124,6 @@ pipeline {
               """
               sh "cmake --build build -- -j${params.PARALLELISM}"
               sh "ccache --show-stats"
-              if ( coverageEnabled ) {
-                sh "cmake --build build --target coverage.init.info"
-              }
               sh """
                 export IROHA_POSTGRES_PASSWORD=${IROHA_POSTGRES_PASSWORD}; \
                 export IROHA_POSTGRES_USER=${IROHA_POSTGRES_USER}; \
@@ -150,24 +135,6 @@ pipeline {
               def testExitCode = sh(script: """cd build && IROHA_POSTGRES_HOST=localhost IROHA_POSTGRES_PORT=5433 ctest --output-on-failure """, returnStatus: true)
               if (testExitCode != 0) {
                 currentBuild.result = "UNSTABLE"
-              }
-              if ( coverageEnabled ) {
-                sh "cmake --build build --target cppcheck"
-                // Sonar
-                if (env.CHANGE_ID != null) {
-                  sh """
-                    sonar-scanner \
-                      -Dsonar.github.disableInlineComments \
-                      -Dsonar.github.repository=${env.DOCKER_REGISTRY_BASENAME} \
-                      -Dsonar.analysis.mode=preview \
-                      -Dsonar.login=${env.SONAR_TOKEN} \
-                      -Dsonar.projectVersion=${BUILD_TAG} \
-                      -Dsonar.github.oauth=${env.SORABOT_TOKEN}
-                  """
-                }
-                sh "cmake --build build --target coverage.info"
-                sh "python /usr/local/bin/lcov_cobertura.py build/reports/coverage.info -o build/reports/coverage.xml"
-                cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/build/reports/coverage.xml', conditionalCoverageTargets: '75, 50, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50, methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
               }
               if (env.GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                 releaseBuild = load ".jenkinsci/mac-release-build.groovy"
