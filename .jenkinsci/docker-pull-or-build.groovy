@@ -36,7 +36,6 @@ def dockerPullOrUpdate(imageName, currentDockerfileURL, previousDockerfileURL, r
     else {
       // try pulling image from Dockerhub, probably image is already there
       def testExitCode = sh(script: "docker pull ${env.DOCKER_REGISTRY_BASENAME}:${imageName}", returnStatus: true)
-      echo testExitCode;
       if (testExitCode != 0) {
         // image does not (yet) exist on Dockerhub. Build it
         iC = docker.build("${env.DOCKER_REGISTRY_BASENAME}:${commit}-${env.BUILD_NUMBER}", "$buildOptions --no-cache -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
