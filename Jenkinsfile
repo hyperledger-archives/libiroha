@@ -158,7 +158,7 @@ pipeline {
                   sh """
                     sonar-scanner \
                       -Dsonar.github.disableInlineComments \
-                      -Dsonar.github.repository='hyperledger/iroha' \
+                      -Dsonar.github.repository=${env.DOCKER_REGISTRY_BASENAME} \
                       -Dsonar.analysis.mode=preview \
                       -Dsonar.login=${env.SONAR_TOKEN} \
                       -Dsonar.projectVersion=${BUILD_TAG} \
