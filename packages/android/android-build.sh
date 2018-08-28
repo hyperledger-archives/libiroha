@@ -56,7 +56,7 @@ else
 fi
 
 ANDROID_TOOLCHAIN_ARGS=(-DCMAKE_SYSTEM_NAME=Android -DCMAKE_SYSTEM_VERSION="$VERSION" -DCMAKE_ANDROID_ARCH_ABI="$PLATFORM" -DANDROID_NDK="$NDK_PATH" -DCMAKE_ANDROID_STL_TYPE=c++_static)
-DEPS_DIR="$PWD"/iroha/dependencies
+DEPS_DIR="$PWD"dependencies
 INSTALL_ARGS=(-DCMAKE_INSTALL_PREFIX="$DEPS_DIR")
 
 CORES=$(getconf _NPROCESSORS_ONLN)
@@ -99,19 +99,19 @@ VERBOSE=1 cmake --build ./iroha-ed25519/build --target install -- -j"$CORES"
 mv "$DEPS_DIR"/lib/static/libed25519.a "$DEPS_DIR"/lib; rmdir "$DEPS_DIR"/lib/static/
 
 # SWIG fixes
-sed -i.bak "s~find_package(JNI REQUIRED)~SET(CMAKE_SWIG_FLAGS \${CMAKE_SWIG_FLAGS} -package ${PACKAGE})~" ./iroha/shared_model/bindings/CMakeLists.txt
-sed -i.bak "s~\${JAVA_INCLUDE_PATH}~#\${JAVA_INCLUDE_PATH}~" ./iroha/shared_model/bindings/CMakeLists.txt
-sed -i.bak "s~\${JAVA_INCLUDE_PATH2}~#\${JAVA_INCLUDE_PATH2}~" ./iroha/shared_model/bindings/CMakeLists.txt
-sed -i.bak "s~target_include_directories(\${SWIG_MODULE_irohajava_REAL_NAME} PUBLIC~SET(CMAKE_SWIG_FLAGS \${CMAKE_SWIG_FLAGS}~" ./iroha/shared_model/bindings/CMakeLists.txt
-sed -i.bak "s~swig_link_libraries(irohajava~swig_link_libraries(irohajava \"${PWD}/protobuf/.build/lib${PROTOBUF_LIB_NAME}.a\" \"${NDK_PATH}/platforms/android-${VERSION}/${ARCH}/usr/${LIBP}/liblog.so\"~" ./iroha/shared_model/bindings/CMakeLists.txt
+sed -i.bak "s~find_package(JNI REQUIRED)~SET(CMAKE_SWIG_FLAGS \${CMAKE_SWIG_FLAGS} -package ${PACKAGE})~" bindings/CMakeLists.txt
+sed -i.bak "s~\${JAVA_INCLUDE_PATH}~#\${JAVA_INCLUDE_PATH}~" bindings/CMakeLists.txt
+sed -i.bak "s~\${JAVA_INCLUDE_PATH2}~#\${JAVA_INCLUDE_PATH2}~" bindings/CMakeLists.txt
+sed -i.bak "s~target_include_directories(\${SWIG_MODULE_irohajava_REAL_NAME} PUBLIC~SET(CMAKE_SWIG_FLAGS \${CMAKE_SWIG_FLAGS}~" bindings/CMakeLists.txt
+sed -i.bak "s~swig_link_libraries(irohajava~swig_link_libraries(irohajava \"${PWD}/protobuf/.build/lib${PROTOBUF_LIB_NAME}.a\" \"${NDK_PATH}/platforms/android-${VERSION}/${ARCH}/usr/${LIBP}/liblog.so\"~" bindings/CMakeLists.txt
 
 # build iroha
-sed -i.bak "s~find_library(protobuf_LIBRARY protobuf)~find_library(protobuf_LIBRARY ${PROTOBUF_LIB_NAME})~" ./iroha/cmake/Modules/Findprotobuf.cmake
-sed -i.bak "s~find_program(protoc_EXECUTABLE protoc~set(protoc_EXECUTABLE \"${PWD}/protobuf/host_build/protoc\"~" ./iroha/cmake/Modules/Findprotobuf.cmake # use host protoc
-cmake -H./iroha/shared_model -B./iroha/shared_model/build "${ANDROID_TOOLCHAIN_ARGS[@]}" -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -DTESTING=OFF -DSWIG_JAVA=ON -DCMAKE_PREFIX_PATH="$DEPS_DIR"
-VERBOSE=1 cmake --build ./iroha/shared_model/build --target irohajava -- -j"$CORES"
+sed -i.bak "s~find_library(protobuf_LIBRARY protobuf)~find_library(protobuf_LIBRARY ${PROTOBUF_LIB_NAME})~" cmake/Modules/Findprotobuf.cmake
+sed -i.bak "s~find_program(protoc_EXECUTABLE protoc~set(protoc_EXECUTABLE \"${PWD}/protobuf/host_build/protoc\"~" cmake/Modules/Findprotobuf.cmake # use host protoc
+cmake . -Bbuild "${ANDROID_TOOLCHAIN_ARGS[@]}" -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -DTESTING=OFF -DSWIG_JAVA=ON -DCMAKE_PREFIX_PATH="$DEPS_DIR"
+VERBOSE=1 cmake --build build --target irohajava -- -j"$CORES"
 
 # copy artifacts
 mkdir lib
-zip ./lib/bindings.zip ./iroha/shared_model/build/bindings/*.java
-cp ./iroha/shared_model/build/bindings/libirohajava.so ./lib
+zip lib/bindings.zip build/bindings/*.java
+cp .build/bindings/libirohajava.so ./lib
