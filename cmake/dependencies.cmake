@@ -32,11 +32,13 @@ endif()
 ##########################
 #         boost          #
 ##########################
+if (NOT TARGET boost)
 find_package(Boost 1.65.0 REQUIRED)
 add_library(boost INTERFACE IMPORTED)
 set_target_properties(boost PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS}
     )
+endif()
 
 ###################################
 #          ed25519/sha3           #
