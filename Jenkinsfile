@@ -4,13 +4,13 @@ properties([parameters([
   booleanParam(defaultValue: true, description: '', name: 'x86_64_linux'),
   booleanParam(defaultValue: false, description: '', name: 'armv7_linux'),
   booleanParam(defaultValue: false, description: '', name: 'armv8_linux'),
-  booleanParam(defaultValue: true, description: '', name: 'x86_64_macos'),
+  booleanParam(defaultValue: false, description: '', name: 'x86_64_macos'),
   booleanParam(defaultValue: false, description: '', name: 'x86_64_win'),
   booleanParam(defaultValue: true, description: 'Build `bindings`', name: 'bindings'),
   booleanParam(defaultValue: true, description: 'Build Java bindings', name: 'JavaBindings'),
   choice(choices: 'Release\nDebug', description: 'Java bindings build type', name: 'JBBuildType'),
   string(defaultValue: 'jp.co.soramitsu.iroha', description: 'Java bindings package name', name: 'JBPackageName'),
-  booleanParam(defaultValue: true, description: 'Build Python bindings', name: 'PythonBindings'),
+  booleanParam(defaultValue: false, description: 'Build Python bindings', name: 'PythonBindings'),
   choice(choices: 'Release\nDebug', description: 'Python bindings build type', name: 'PBBuildType'),
   choice(choices: 'python3\npython2', description: 'Python bindings version', name: 'PBVersion'),
   booleanParam(defaultValue: false, description: 'Build Android bindings', name: 'AndroidBindings'),
@@ -284,18 +284,7 @@ pipeline {
             success {
               script {
                 def artifacts = load ".jenkinsci/artifacts.groovy"
-                if (params.JavaBindings) {
-                  javaBindingsPath = [ '/tmp/${env.GIT_COMMIT}/bindings-artifact/java' ]
-                  artifacts.uploadArtifacts(javaBindingsPath, '/libiroha/bindings/java')
-                }
-                if (params.PythonBindings) {
-                  pythonBindingsPath = [ '/tmp/${env.GIT_COMMIT}/bindings-artifact/python' ]
-                  artifacts.uploadArtifacts(pythonBindingsPath, '/libiroha/bindings/python')
-                }
-                if (params.AndroidBindings) {
-                  androidBindingsPath = [ '/tmp/${env.GIT_COMMIT}/bindings-artifact/android' ]
-                  artifacts.uploadArtifacts(androidBindingsPath, '/libiroha/bindings/android')
-                }
+                artifacts.uploadArtifacts('/tmp/${env.GIT_COMMIT}/bindings-artifact')
               }
             }
             cleanup {
