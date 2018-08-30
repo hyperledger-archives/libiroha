@@ -18,6 +18,12 @@ def buildOptionsString(options) {
 }
 
 def dockerPullOrUpdate(imageName, currentDockerfileURL, previousDockerfileURL, referenceDockerfileURL, buildOptions=null) {
+
+  echo "!!! IMAGE_NAME: ${imageName}";
+  echo "!!! CURR URL: ${currentDockerfileURL}";
+  echo "!!! PREV URL: ${currentDockerfileURL}";
+  echo "!!! REF  URL: ${referenceDockerfileURL}";
+
   buildOptions = buildOptionsString(buildOptions)
   def commit = sh(script: "echo ${env.GIT_LOCAL_BRANCH} | md5sum | cut -c 1-8", returnStdout: true).trim()
   if (remoteFilesDiffer(currentDockerfileURL, previousDockerfileURL)) {
@@ -25,23 +31,28 @@ def dockerPullOrUpdate(imageName, currentDockerfileURL, previousDockerfileURL, r
     // Worst case scenario. We cannot count on the local cache
     // because Dockerfile may contain apt-get entries that would try to update
     // from invalid (stale) addresses
+    echo "+++ OK WE BUILD ABSOLUTELY NEW IMAGE. WORST CASE";
     iC = docker.build("${env.DOCKER_REGISTRY_BASENAME}:${commit}-${env.BUILD_NUMBER}", "${buildOptions} --no-cache -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
   }
   else {
     // first commit in this branch or Dockerfile modified
     if (remoteFilesDiffer(currentDockerfileURL, referenceDockerfileURL)) {
       // if we're lucky to build on the same agent, image will be built using cache
+      echo "+++ OK WE BUILD IMAGE FROM CACHE";
       iC = docker.build("${env.DOCKER_REGISTRY_BASENAME}:${commit}-${env.BUILD_NUMBER}", "${buildOptions} -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
     }
     else {
       // try pulling image from Dockerhub, probably image is already there
+      echo "+++ PULLING IMAGE FROM DOCKERHUB";
       def testExitCode = sh(script: "docker pull ${env.DOCKER_REGISTRY_BASENAME}:${imageName}", returnStatus: true)
       if (testExitCode != 0) {
         // image does not (yet) exist on Dockerhub. Build it
+        echo "+++ IMAGE MISSING. BUILD...";
         iC = docker.build("${env.DOCKER_REGISTRY_BASENAME}:${commit}-${env.BUILD_NUMBER}", "$buildOptions --no-cache -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
       }
       else {
         // no difference found compared to both previous and reference Dockerfile
+        echo "+++ DOCKERHUB IMAGE";
         iC = docker.image("${env.DOCKER_REGISTRY_BASENAME}:${imageName}")
       }
     }
