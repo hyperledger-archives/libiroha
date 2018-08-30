@@ -27,9 +27,8 @@ def uploadArtifacts(filePath, uploadPath, artifactServers=['artifact.soramitsu.c
   }
 
 withCredentials([usernamePassword(credentialsId: 'ci_nexus', passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')]) {
-    artifactServers.each {
-        sh(script: "find ${filePath}/* -type f -exec curl -u ${NEXUS_USER}:${NEXUS_PASS} --upload-file {} https://nexus.iroha.tech/repository/artifacts/{} \\;", reutrnStdout: true)
-      }
+  artifactServers.each {
+      sh(script: "find ${filePath}/* -type f -exec curl -u ${NEXUS_USER}:${NEXUS_PASS} --upload-file {} https://nexus.iroha.tech/repository/artifacts/{} \\;", reutrnStdout: true)
     }
   }
 }
