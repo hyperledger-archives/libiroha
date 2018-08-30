@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 
-def uploadArtifacts(filePath, uploadPath, artifactServers=['artifact.soramitsu.co.jp']) {
+def uploadArtifacts(filePath, artifactServers=['artifact.soramitsu.co.jp']) {
   def filePathsConverted = []
   agentType = sh(script: 'uname', returnStdout: true).trim()
   fp = sh(script: "find ${filePath}/* -type f -print | tr '\n' ','", returnStdout: true).trim()
