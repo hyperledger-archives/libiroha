@@ -1,11 +1,9 @@
 #!/usr/bin/env groovy
 
-def uploadArtifacts(filePaths, uploadPath, artifactServers=['artifact.soramitsu.co.jp']) {
-  def baseUploadPath = 'artifact/files'
+def uploadArtifacts(filePath, uploadPath, artifactServers=['artifact.soramitsu.co.jp']) {
   def filePathsConverted = []
   agentType = sh(script: 'uname', returnStdout: true).trim()
-  uploadPath = baseUploadPath + uploadPath
-  filePaths.each {
+  filePath.each {
     fp = sh(script: "ls -d ${it} | tr '\n' ','", returnStdout: true).trim()
     filePathsConverted.addAll(fp.split(','))
   }
@@ -17,42 +15,23 @@ def uploadArtifacts(filePaths, uploadPath, artifactServers=['artifact.soramitsu.
     md5SumBinary = 'md5 -r'
     gpgKeyBinary = 'GPG_TTY=\$(tty) gpg --pinentry-mode loopback --armor --detach-sign --no-tty --batch --yes --passphrase-fd 0'
   }
-  sh "> \$(pwd)/batch.txt"
 
   withCredentials([file(credentialsId: 'ci_gpg_privkey', variable: 'CI_GPG_PRIVKEY'), string(credentialsId: 'ci_gpg_masterkey', variable: 'CI_GPG_MASTERKEY')]) {
     if (!agentType.contains('MSYS_NT')) {
       sh "gpg --yes --batch --no-tty --import ${CI_GPG_PRIVKEY} || true"
     }
     filePathsConverted.each {
-      sh "echo put ${it} $uploadPath >> \$(pwd)/batch.txt;"
       sh "$shaSumBinary ${it} | cut -d' ' -f1 > \$(pwd)/\$(basename ${it}).sha256"
       sh "$md5SumBinary ${it} | cut -d' ' -f1 > \$(pwd)/\$(basename ${it}).md5"
-      // TODO @bakhtin 30.05.18 IR-1384. Make gpg command options and paths compatible with Windows OS.
-      if (!agentType.contains('MSYS_NT')) {
-        sh "echo \"${CI_GPG_MASTERKEY}\" | $gpgKeyBinary -o \$(pwd)/\$(basename ${it}).asc ${it}"
-        sh "echo put \$(pwd)/\$(basename ${it}).asc $uploadPath >> \$(pwd)/batch.txt;"
-      }
-      sh "echo put \$(pwd)/\$(basename ${it}).sha256 $uploadPath >> \$(pwd)/batch.txt;"
-      sh "echo put \$(pwd)/\$(basename ${it}).md5 $uploadPath >> \$(pwd)/batch.txt;"
+      sh "echo \"${CI_GPG_MASTERKEY}\" | $gpgKeyBinary -o \$(pwd)/\$(basename ${it}).asc ${it}"
     }
   }
-  // mkdirs recursively
-  uploadPath = uploadPath.split('/')
-  def p = ''
-  sh "> \$(pwd)/mkdirs.txt"
-  uploadPath.each {
-    p += "/${it}"
-    sh("echo -mkdir $p >> \$(pwd)/mkdirs.txt")
-  }
 
-  sshagent(['jenkins-artifact']) {
-    sh "ssh-agent"
+withCredentials([usernamePassword(credentialsId: 'ci_nexus', passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')]) {
     artifactServers.each {
-      sh "sftp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -b \$(pwd)/mkdirs.txt jenkins@${it} || true"
-      sh "sftp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -b \$(pwd)/batch.txt jenkins@${it}"
+      sh "for file in /folder/path/*; do curl -u ${NEXUS_USER}:${NEXUS_PASS} --upload-file \${file} https://nexus.iroha.tech/repository/artifacts${uploadPath}; done"
     }
   }
 }
 
 return this
-

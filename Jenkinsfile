@@ -1,12 +1,12 @@
 properties([parameters([
-  booleanParam(defaultValue: true, description: 'Build `iroha`', name: 'iroha'),
+  booleanParam(defaultValue: false, description: 'Build `iroha`', name: 'iroha'),
   choice(choices: 'Debug\nRelease', description: 'Iroha build type', name: 'build_type'),
-  booleanParam(defaultValue: true, description: 'Build `bindings`', name: 'bindings'),
   booleanParam(defaultValue: true, description: '', name: 'x86_64_linux'),
   booleanParam(defaultValue: false, description: '', name: 'armv7_linux'),
   booleanParam(defaultValue: false, description: '', name: 'armv8_linux'),
   booleanParam(defaultValue: true, description: '', name: 'x86_64_macos'),
   booleanParam(defaultValue: false, description: '', name: 'x86_64_win'),
+  booleanParam(defaultValue: true, description: 'Build `bindings`', name: 'bindings'),
   booleanParam(defaultValue: true, description: 'Build Java bindings', name: 'JavaBindings'),
   choice(choices: 'Release\nDebug', description: 'Java bindings build type', name: 'JBBuildType'),
   string(defaultValue: 'jp.co.soramitsu.iroha', description: 'Java bindings package name', name: 'JBPackageName'),
@@ -257,12 +257,12 @@ pipeline {
                   "${env.GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
                   ['PARALLELISM': params.PARALLELISM])
                 if (params.JavaBindings) {
-                  iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
+                  iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact/java:/tmp/bindings-artifact") {
                     bindings.doJavaBindings('linux', params.JBPackageName, params.JBBuildType)
                   }
                 }
                 if (params.PythonBindings) {
-                  iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
+                  iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact/java:/tmp/bindings-artifact") {
                     bindings.doPythonBindings('linux', params.PBBuildType)
                   }
                 }
@@ -274,30 +274,30 @@ pipeline {
                   "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/android/Dockerfile",
                   "${env.GIT_RAW_BASE_URL}/develop/docker/android/Dockerfile",
                   ['PARALLELISM': params.PARALLELISM, 'PLATFORM': params.ABPlatform, 'BUILD_TYPE': params.ABBuildType])
-                iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
+                iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact/android:/tmp/bindings-artifact") {
                   bindings.doAndroidBindings(params.ABABIVersion)
                 }
               }
             }
           }
           post {
-            // success {
-            //   script {
-            //     def artifacts = load ".jenkinsci/artifacts.groovy"
-            //     if (params.JavaBindings) {
-            //       javaBindingsFilePaths = [ '/tmp/${env.GIT_COMMIT}/bindings-artifact/java-bindings-*.zip' ]
-            //       artifacts.uploadArtifacts(javaBindingsFilePaths, '/iroha/bindings/java')
-            //     }
-            //     if (params.PythonBindings) {
-            //       pythonBindingsFilePaths = [ '/tmp/${env.GIT_COMMIT}/bindings-artifact/python-bindings-*.zip' ]
-            //       artifacts.uploadArtifacts(pythonBindingsFilePaths, '/iroha/bindings/python')
-            //     }
-            //     if (params.AndroidBindings) {
-            //       androidBindingsFilePaths = [ '/tmp/${env.GIT_COMMIT}/bindings-artifact/android-bindings-*.zip' ]
-            //       artifacts.uploadArtifacts(androidBindingsFilePaths, '/iroha/bindings/android')
-            //     }
-            //   }
-            // }
+            success {
+              script {
+                def artifacts = load ".jenkinsci/artifacts.groovy"
+                if (params.JavaBindings) {
+                  javaBindingsPath = [ '/tmp/${env.GIT_COMMIT}/bindings-artifact/java' ]
+                  artifacts.uploadArtifacts(javaBindingsFilePath, '/libiroha/bindings/java')
+                }
+                if (params.PythonBindings) {
+                  pythonBindingsPath = [ '/tmp/${env.GIT_COMMIT}/bindings-artifact/python' ]
+                  artifacts.uploadArtifacts(pythonBindingsPath, '/libiroha/bindings/python')
+                }
+                if (params.AndroidBindings) {
+                  androidBindingsPath = [ '/tmp/${env.GIT_COMMIT}/bindings-artifact/android' ]
+                  artifacts.uploadArtifacts(androidBindingsPath, '/libiroha/bindings/android')
+                }
+              }
+            }
             cleanup {
               sh "rm -rf /tmp/${env.GIT_COMMIT}"
               cleanWs()
