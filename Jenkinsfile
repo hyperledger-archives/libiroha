@@ -257,12 +257,12 @@ pipeline {
                   "${env.GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
                   ['PARALLELISM': params.PARALLELISM])
                 if (params.JavaBindings) {
-                  iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact/java:/tmp/bindings-artifact") {
+                  iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact/java:/tmp/bindings-artifact/java") {
                     bindings.doJavaBindings('linux', params.JBPackageName, params.JBBuildType)
                   }
                 }
                 if (params.PythonBindings) {
-                  iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact/java:/tmp/bindings-artifact") {
+                  iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact/python:/tmp/bindings-artifact/python") {
                     bindings.doPythonBindings('linux', params.PBBuildType)
                   }
                 }
@@ -274,7 +274,7 @@ pipeline {
                   "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/android/Dockerfile",
                   "${env.GIT_RAW_BASE_URL}/develop/docker/android/Dockerfile",
                   ['PARALLELISM': params.PARALLELISM, 'PLATFORM': params.ABPlatform, 'BUILD_TYPE': params.ABBuildType])
-                iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact/android:/tmp/bindings-artifact") {
+                iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact/android:/tmp/bindings-artifact/android") {
                   bindings.doAndroidBindings(params.ABABIVersion)
                 }
               }
@@ -286,7 +286,7 @@ pipeline {
                 def artifacts = load ".jenkinsci/artifacts.groovy"
                 if (params.JavaBindings) {
                   javaBindingsPath = [ '/tmp/${env.GIT_COMMIT}/bindings-artifact/java' ]
-                  artifacts.uploadArtifacts(javaBindingsFilePath, '/libiroha/bindings/java')
+                  artifacts.uploadArtifacts(javaBindingsPath, '/libiroha/bindings/java')
                 }
                 if (params.PythonBindings) {
                   pythonBindingsPath = [ '/tmp/${env.GIT_COMMIT}/bindings-artifact/python' ]

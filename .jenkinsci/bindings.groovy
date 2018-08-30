@@ -7,7 +7,7 @@ def doJavaBindings(os, packageName, buildType=Release) {
     [currentPath, buildType, os, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)])
   def cmakeOptions = ""
   if (os == 'windows') {
-    sh "mkdir -p /tmp/${env.GIT_COMMIT}/bindings-artifact"
+    sh "mkdir -p /tmp/${env.GIT_COMMIT}/bindings-artifact/java"
     cmakeOptions = '-DCMAKE_TOOLCHAIN_FILE=/c/Users/Administrator/Downloads/vcpkg-master/vcpkg-master/scripts/buildsystems/vcpkg.cmake -G "NMake Makefiles"'
   }
   if (os == 'linux') {
@@ -29,10 +29,10 @@ def doJavaBindings(os, packageName, buildType=Release) {
       zip -r $artifactsPath *.dll *.lib *.manifest *.exp libirohajava.so \$(echo ${packageName} | cut -d '.' -f1); \
       popd"
   if (os == 'windows') {
-    sh "cp $artifactsPath /tmp/${env.GIT_COMMIT}/bindings-artifact"
+    sh "cp $artifactsPath /tmp/${env.GIT_COMMIT}/bindings-artifact/java"
   }
   else {
-    sh "cp $artifactsPath /tmp/bindings-artifact"
+    sh "cp $artifactsPath /tmp/bindings-artifact/java"
   }
   return artifactsPath
 }
@@ -45,7 +45,7 @@ def doPythonBindings(os, buildType=Release) {
     [currentPath, env.PBVersion, buildType, os, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)])
   def cmakeOptions = ""
   if (os == 'windows') {
-    sh "mkdir -p /tmp/${env.GIT_COMMIT}/bindings-artifact"
+    sh "mkdir -p /tmp/${env.GIT_COMMIT}/bindings-artifact/python"
     cmakeOptions = '-DCMAKE_TOOLCHAIN_FILE=/c/Users/Administrator/Downloads/vcpkg-master/vcpkg-master/scripts/buildsystems/vcpkg.cmake -G "NMake Makefiles"'
   }
   if (os == 'linux') {
@@ -94,10 +94,10 @@ def doPythonBindings(os, buildType=Release) {
       build/bindings/*.exp build/bindings/*.manifest
     """
   if (os == 'windows') {
-    sh "cp $artifactsPath /tmp/${env.GIT_COMMIT}/bindings-artifact"
+    sh "cp $artifactsPath /tmp/${env.GIT_COMMIT}/bindings-artifact/python"
   }
   else {
-    sh "cp $artifactsPath /tmp/bindings-artifact"
+    sh "cp $artifactsPath /tmp/bindings-artifact/python"
   }
   return artifactsPath
 }
@@ -123,7 +123,7 @@ def doAndroidBindings(abiVersion) {
     """
   sh "cmake --build build --target irohajava -- -j${params.PARALLELISM}"
   sh "zip -j $artifactsPath build/bindings/*.java build/bindings/libirohajava.so"
-  sh "cp $artifactsPath /tmp/bindings-artifact"
+  sh "cp $artifactsPath /tmp/bindings-artifact/android"
   return artifactsPath
 }
 
