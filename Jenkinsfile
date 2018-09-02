@@ -1,16 +1,16 @@
 properties([parameters([
-  booleanParam(defaultValue: false, description: 'Build `iroha`', name: 'iroha'),
+  booleanParam(defaultValue: true, description: 'Build `iroha`', name: 'iroha'),
   choice(choices: 'Debug\nRelease', description: 'Iroha build type', name: 'build_type'),
   booleanParam(defaultValue: true, description: 'Build `bindings`', name: 'bindings'),
   booleanParam(defaultValue: true, description: '', name: 'x86_64_linux'),
   booleanParam(defaultValue: false, description: '', name: 'armv7_linux'),
   booleanParam(defaultValue: false, description: '', name: 'armv8_linux'),
-  booleanParam(defaultValue: false, description: '', name: 'x86_64_macos'),
+  booleanParam(defaultValue: true, description: '', name: 'x86_64_macos'),
   booleanParam(defaultValue: false, description: '', name: 'x86_64_win'),
   booleanParam(defaultValue: true, description: 'Build Java bindings', name: 'JavaBindings'),
   choice(choices: 'Release\nDebug', description: 'Java bindings build type', name: 'JBBuildType'),
   string(defaultValue: 'jp.co.soramitsu.iroha', description: 'Java bindings package name', name: 'JBPackageName'),
-  booleanParam(defaultValue: false, description: 'Build Python bindings', name: 'PythonBindings'),
+  booleanParam(defaultValue: true, description: 'Build Python bindings', name: 'PythonBindings'),
   choice(choices: 'Release\nDebug', description: 'Python bindings build type', name: 'PBBuildType'),
   choice(choices: 'python3\npython2', description: 'Python bindings version', name: 'PBVersion'),
   booleanParam(defaultValue: false, description: 'Build Android bindings', name: 'AndroidBindings'),
@@ -28,10 +28,10 @@ pipeline {
     GIT_RAW_BASE_URL = "https://raw.githubusercontent.com/hyperledger/libiroha"
     DOCKER_REGISTRY_BASENAME = "hyperledger/libiroha"
 
-    IROHA_NETWORK = "iroha-0${CHANGE_ID}-${env.GIT_COMMIT}-${BUILD_NUMBER}"
-    IROHA_POSTGRES_HOST = "pg-0${CHANGE_ID}-${env.GIT_COMMIT}-${BUILD_NUMBER}"
-    IROHA_POSTGRES_USER = "pguser${env.GIT_COMMIT}"
-    IROHA_POSTGRES_PASSWORD = "${env.GIT_COMMIT}"
+    IROHA_NETWORK = "iroha-0${CHANGE_ID}-${GIT_COMMIT}-${BUILD_NUMBER}"
+    IROHA_POSTGRES_HOST = "pg-0${CHANGE_ID}-${GIT_COMMIT}-${BUILD_NUMBER}"
+    IROHA_POSTGRES_USER = "pguser${GIT_COMMIT}"
+    IROHA_POSTGRES_PASSWORD = "${GIT_COMMIT}"
     IROHA_POSTGRES_PORT = 5432
     CHANGE_BRANCH_LOCAL = ''
   }
@@ -50,10 +50,10 @@ pipeline {
           // need this for develop->master PR cases
           // CHANGE_BRANCH is not defined if this is a branch build
           try {
-            CHANGE_BRANCH_LOCAL = env.CHANGE_BRANCH
+            CHANGE_BRANCH_LOCAL = CHANGE_BRANCH
           }
           catch(MissingPropertyException e) { }
-          if (env.GIT_LOCAL_BRANCH != "develop" && env.CHANGE_BRANCH_LOCAL != "develop") {
+          if (GIT_LOCAL_BRANCH != "develop" && CHANGE_BRANCH_LOCAL != "develop") {
             def builds = load ".jenkinsci/cancel-builds-same-job.groovy"
             builds.cancelSameJobBuilds()
           }
@@ -78,7 +78,7 @@ pipeline {
             script {
               debugBuild = load ".jenkinsci/debug-build.groovy"
               debugBuild.doDebugBuild()
-              if (env.GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                 releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -103,9 +103,9 @@ pipeline {
             script {
               def cmakeOptions = ""
               def scmVars = checkout scm
-              env.IROHA_VERSION = "0x${scmVars.GIT_COMMIT}"
-              env.IROHA_HOME = "/opt/iroha"
-              env.IROHA_BUILD = "${env.IROHA_HOME}/build"
+              IROHA_VERSION = "0x${scmVars.GIT_COMMIT}"
+              IROHA_HOME = "/opt/iroha"
+              IROHA_BUILD = "${IROHA_HOME}/build"
 
               sh """
                 ccache --version
@@ -119,7 +119,7 @@ pipeline {
                   -H. \
                   -Bbuild \
                   -DCMAKE_BUILD_TYPE=${params.build_type} \
-                  -DIROHA_VERSION=${env.IROHA_VERSION} \
+                  -DIROHA_VERSION=${IROHA_VERSION} \
                   ${cmakeOptions}
               """
               sh "cmake --build build -- -j${params.PARALLELISM}"
@@ -136,7 +136,7 @@ pipeline {
               if (testExitCode != 0) {
                 currentBuild.result = "UNSTABLE"
               }
-              if (env.GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                 releaseBuild = load ".jenkinsci/mac-release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -147,18 +147,18 @@ pipeline {
               script {
                 timeout(time: 600, unit: "SECONDS") {
                   try {
-                    if (currentBuild.currentResult == "SUCCESS" && env.GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+                    if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                       def artifacts = load ".jenkinsci/artifacts.groovy"
-                      def commit = env.GIT_COMMIT
+                      def commit = GIT_COMMIT
                       filePaths = [ '\$(pwd)/build/*.tar.gz' ]
-                      // artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [env.GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
+                      artifacts.uploadArtifacts(filePaths, sprintf('libiroha/macos/%1$s-%2$s-%3$s', [GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.take(6)]))
                     }
                   }
                   finally {
                     cleanWs()
                     sh """
-                      pg_ctl -D /var/jenkins/${env.GIT_COMMIT}-${BUILD_NUMBER}/ stop && \
-                      rm -rf /var/jenkins/${env.GIT_COMMIT}-${BUILD_NUMBER}/
+                      pg_ctl -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ stop && \
+                      rm -rf /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/
                     """
                   }
                 }
@@ -212,11 +212,11 @@ pipeline {
               script {
                 timeout(time: 600, unit: "SECONDS") {
                   try {
-                    if (currentBuild.currentResult == "SUCCESS" && env.GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+                    if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                       def artifacts = load ".jenkinsci/artifacts.groovy"
-                      def commit = env.GIT_COMMIT
+                      def commit = GIT_COMMIT
                       filePaths = [ '\$(pwd)/build/*.tar.gz' ]
-                      // artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [env.GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
+                      artifacts.uploadArtifacts(filePaths, sprintf('libiroha/macos/%1$s-%2$s-%3$s', [GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.take(6)]))
                     }
                   }
                   finally {
@@ -252,9 +252,9 @@ pipeline {
               if (params.JavaBindings || params.PythonBindings) {
                 def iC = dPullOrBuild.dockerPullOrUpdate(
                   "$platform-develop-build",
-                  "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/Dockerfile",
-                  "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/Dockerfile",
-                  "${env.GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
+                  "${GIT_RAW_BASE_URL}/${GIT_COMMIT}/docker/develop/Dockerfile",
+                  "${GIT_RAW_BASE_URL}/${GIT_PREVIOUS_COMMIT}/docker/develop/Dockerfile",
+                  "${GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
                   ['PARALLELISM': params.PARALLELISM])
                 if (params.JavaBindings) {
                   iC.inside() {
@@ -262,7 +262,7 @@ pipeline {
                   }
                 }
                 if (params.PythonBindings) {
-                  iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
+                  iC.inside() {
                     bindings.doPythonBindings('linux', params.PBBuildType)
                   }
                 }
@@ -270,11 +270,11 @@ pipeline {
               if (params.AndroidBindings) {
                 def iC = dPullOrBuild.dockerPullOrUpdate(
                   "android-${params.ABPlatform}-${params.ABBuildType}",
-                  "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/android/Dockerfile",
-                  "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/android/Dockerfile",
-                  "${env.GIT_RAW_BASE_URL}/develop/docker/android/Dockerfile",
+                  "${GIT_RAW_BASE_URL}/${GIT_COMMIT}/docker/android/Dockerfile",
+                  "${GIT_RAW_BASE_URL}/${GIT_PREVIOUS_COMMIT}/docker/android/Dockerfile",
+                  "${GIT_RAW_BASE_URL}/develop/docker/android/Dockerfile",
                   ['PARALLELISM': params.PARALLELISM, 'PLATFORM': params.ABPlatform, 'BUILD_TYPE': params.ABBuildType])
-                iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
+                iC.inside() {
                   bindings.doAndroidBindings(params.ABABIVersion)
                 }
               }
@@ -285,21 +285,21 @@ pipeline {
               script {
                 def artifacts = load ".jenkinsci/artifacts.groovy"
                 if (params.JavaBindings) {
-                  javaBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/java-bindings-*.zip' ]
-                  artifacts.uploadArtifacts(javaBindingsFilePaths, '/libiroha/bindings/java')
+                  javaBindingsFilePaths = [ 'java-bindings-*.zip' ]
+                  artifacts.uploadArtifacts(javaBindingsFilePaths, 'libiroha/bindings/java')
                 }
                 if (params.PythonBindings) {
-                  pythonBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/python-bindings-*.zip' ]
-                  artifacts.uploadArtifacts(pythonBindingsFilePaths, '/libiroha/bindings/python')
+                  pythonBindingsFilePaths = [ 'python-bindings-*.zip' ]
+                  artifacts.uploadArtifacts(pythonBindingsFilePaths, 'libiroha/bindings/python')
                 }
                 if (params.AndroidBindings) {
-                  androidBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/android-bindings-*.zip' ]
-                  artifacts.uploadArtifacts(androidBindingsFilePaths, '/libiroha/bindings/android')
+                  androidBindingsFilePaths = [ 'android-bindings-*.zip' ]
+                  artifacts.uploadArtifacts(androidBindingsFilePaths, 'libiroha/bindings/android')
                 }
               }
             }
             cleanup {
-              // sh "rm -rf /tmp/${env.GIT_COMMIT}"
+              sh "rm -rf /tmp/${GIT_COMMIT}"
               cleanWs()
             }
           }
@@ -326,17 +326,17 @@ pipeline {
               script {
                 def artifacts = load ".jenkinsci/artifacts.groovy"
                 if (params.JavaBindings) {
-                  javaBindingsFilePaths = [ '/tmp/${env.GIT_COMMIT}/bindings-artifact/java-bindings-*.zip' ]
-                  artifacts.uploadArtifacts(javaBindingsFilePaths, '/iroha/bindings/java')
+                  javaBindingsFilePaths = [ 'java-bindings-*.zip' ]
+                  artifacts.uploadArtifacts(javaBindingsFilePaths, 'libiroha/bindings/java')
                 }
                 if (params.PythonBindings) {
-                  pythonBindingsFilePaths = [ '/tmp/${env.GIT_COMMIT}/bindings-artifact/python-bindings-*.zip' ]
-                  artifacts.uploadArtifacts(pythonBindingsFilePaths, '/iroha/bindings/python')
+                  pythonBindingsFilePaths = [ 'python-bindings-*.zip' ]
+                  artifacts.uploadArtifacts(pythonBindingsFilePaths, 'libiroha/bindings/python')
                 }
               }
             }
             cleanup {
-              sh "rm -rf /tmp/${env.GIT_COMMIT}"
+              sh "rm -rf /tmp/${GIT_COMMIT}"
               cleanWs()
             }
           }

@@ -1,12 +1,10 @@
 #!/usr/bin/env groovy
 
 def uploadArtifacts(filePaths, uploadPath, artifactServers=['artifact.soramitsu.co.jp']) {
-  def baseUploadPath = 'artifact/files'
   def filePathsConverted = []
   agentType = sh(script: 'uname', returnStdout: true).trim()
-  uploadPath = baseUploadPath + uploadPath
   filePaths.each {
-    fp = sh(script: "ls -d ${it} | tr '\n' ','", returnStdout: true).trim()
+    fp = sh(script: "ls -d  \$(pwd)/\$(basename ${it}) | tr '\n' ','", returnStdout: true).trim()
     filePathsConverted.addAll(fp.split(','))
   }
   def shaSumBinary = 'sha256sum'
@@ -36,24 +34,11 @@ def uploadArtifacts(filePaths, uploadPath, artifactServers=['artifact.soramitsu.
       sh "echo \$(pwd)/\$(basename ${it}).md5 >> \$(pwd)/batch.txt;"
     }
   }
-
-  sh "echo \$(pwd)/batch.txt;"
-  // mkdirs recursively
-  // uploadPath = uploadPath.split('/')
-  // def p = ''
-  // sh "> \$(pwd)/mkdirs.txt"
-  // uploadPath.each {
-  //   p += "/${it}"
-  //   sh("echo -mkdir $p >> \$(pwd)/mkdirs.txt")
-  // }
-
-  // sshagent(['jenkins-artifact']) {
-  //   sh "ssh-agent"
-  //   artifactServers.each {
-  //     sh "sftp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -b \$(pwd)/mkdirs.txt jenkins@${it} || true"
-  //     sh "sftp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -b \$(pwd)/batch.txt jenkins@${it}"
-  //   }
-  // }
+  withCredentials([usernamePassword(credentialsId: 'ci_nexus', passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')]) {
+    artifactServers.each {
+      sh(script: "while read line; do curl -v -u ${NEXUS_USER}:${NEXUS_PASS} --upload-file \$line https://nexus.iroha.tech/repository/artifacts/${uploadPath}/ ; done < \$(pwd)/batch.txt")
+    }
+  }
 }
 
 return this
