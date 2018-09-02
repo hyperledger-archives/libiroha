@@ -53,7 +53,7 @@ pipeline {
             CHANGE_BRANCH_LOCAL = CHANGE_BRANCH
           }
           catch(MissingPropertyException e) { }
-          if (GIT_LOCAL_BRANCH != "develop" && CHANGE_BRANCH_LOCAL != "develop") {
+          if (env.GIT_LOCAL_BRANCH != "develop" && CHANGE_BRANCH_LOCAL != "develop") {
             def builds = load ".jenkinsci/cancel-builds-same-job.groovy"
             builds.cancelSameJobBuilds()
           }
@@ -78,7 +78,7 @@ pipeline {
             script {
               debugBuild = load ".jenkinsci/debug-build.groovy"
               debugBuild.doDebugBuild()
-              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+              if (env.GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                 releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -136,7 +136,7 @@ pipeline {
               if (testExitCode != 0) {
                 currentBuild.result = "UNSTABLE"
               }
-              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+              if (env.GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                 releaseBuild = load ".jenkinsci/mac-release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -147,11 +147,11 @@ pipeline {
               script {
                 timeout(time: 600, unit: "SECONDS") {
                   try {
-                    if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+                    if (currentBuild.currentResult == "SUCCESS" && env.GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                       def artifacts = load ".jenkinsci/artifacts.groovy"
                       def commit = GIT_COMMIT
                       filePaths = [ '\$(pwd)/build/*.tar.gz' ]
-                      artifacts.uploadArtifacts(filePaths, sprintf('libiroha/macos/%1$s-%2$s-%3$s', [GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.take(6)]))
+                      artifacts.uploadArtifacts(filePaths, sprintf('libiroha/macos/%1$s-%2$s-%3$s', [env.GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.take(6)]))
                     }
                   }
                   finally {
@@ -212,11 +212,11 @@ pipeline {
               script {
                 timeout(time: 600, unit: "SECONDS") {
                   try {
-                    if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+                    if (currentBuild.currentResult == "SUCCESS" && env.GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                       def artifacts = load ".jenkinsci/artifacts.groovy"
                       def commit = GIT_COMMIT
                       filePaths = [ '\$(pwd)/build/*.tar.gz' ]
-                      artifacts.uploadArtifacts(filePaths, sprintf('libiroha/macos/%1$s-%2$s-%3$s', [GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.take(6)]))
+                      artifacts.uploadArtifacts(filePaths, sprintf('libiroha/macos/%1$s-%2$s-%3$s', [env.GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.take(6)]))
                     }
                   }
                   finally {
