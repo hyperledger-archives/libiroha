@@ -4,7 +4,7 @@ def uploadArtifacts(filePaths, uploadPath, artifactServers=['artifact.soramitsu.
   def filePathsConverted = []
   agentType = sh(script: 'uname', returnStdout: true).trim()
   filePaths.each {
-    fp = sh(script: "ls -d ${it} | tr '\n' ','", returnStdout: true).trim()
+    // fp = sh(script: "ls -d ${it} | tr '\n' ','", returnStdout: true).trim()
     filePathsConverted.addAll(fp.split(','))
   }
   def shaSumBinary = 'sha256sum'
@@ -27,8 +27,8 @@ def uploadArtifacts(filePaths, uploadPath, artifactServers=['artifact.soramitsu.
       sh "$md5SumBinary ${it} | cut -d' ' -f1 > \$(pwd)/\$(basename ${it}).md5"
       // TODO @bakhtin 30.05.18 IR-1384. Make gpg command options and paths compatible with Windows OS.
       if (!agentType.contains('MSYS_NT')) {
-        sh "echo \"${CI_GPG_MASTERKEY}\" | $gpgKeyBinary -o \$(pwd)/\$(basename ${it}).asc ${it}"
-        sh "echo \$(pwd)/\$(basename ${it}).asc >> \$(pwd)/batch.txt;"
+        sh "echo \"${CI_GPG_MASTERKEY}\" | $gpgKeyBinary -o \$(pwd)/\$(basename ${it}).ascfile ${it}"
+        sh "echo \$(pwd)/\$(basename ${it}).ascfile >> \$(pwd)/batch.txt;"
       }
       sh "echo \$(pwd)/\$(basename ${it}).sha256 >> \$(pwd)/batch.txt;"
       sh "echo \$(pwd)/\$(basename ${it}).md5 >> \$(pwd)/batch.txt;"
