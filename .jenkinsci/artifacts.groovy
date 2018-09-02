@@ -45,13 +45,13 @@ def uploadArtifacts(filePaths, uploadPath, artifactServers=['artifact.soramitsu.
     sh("echo -mkdir $p >> \$(pwd)/mkdirs.txt")
   }
 
-  sshagent(['jenkins-artifact']) {
-    sh "ssh-agent"
-    artifactServers.each {
-      sh "sftp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -b \$(pwd)/mkdirs.txt jenkins@${it} || true"
-      sh "sftp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -b \$(pwd)/batch.txt jenkins@${it}"
-    }
-  }
+  // sshagent(['jenkins-artifact']) {
+  //   sh "ssh-agent"
+  //   artifactServers.each {
+  //     sh "sftp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -b \$(pwd)/mkdirs.txt jenkins@${it} || true"
+  //     sh "sftp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -b \$(pwd)/batch.txt jenkins@${it}"
+  //   }
+  // }
 }
 
 return this
