@@ -4,7 +4,7 @@ def uploadArtifacts(filePaths, uploadPath, artifactServers=['artifact.soramitsu.
   def filePathsConverted = []
   agentType = sh(script: 'uname', returnStdout: true).trim()
   filePaths.each {
-    fp = sh(script: "ls -d  \$(pwd)/\$(basename ${it}) | tr '\n' ','", returnStdout: true).trim()
+    fp = sh(script: "ls -d ${it} | tr '\n' ','", returnStdout: true).trim()
     filePathsConverted.addAll(fp.split(','))
   }
   def shaSumBinary = 'sha256sum'
