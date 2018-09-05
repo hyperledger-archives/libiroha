@@ -2,12 +2,12 @@
 
 def doJavaBindings(os, packageName, buildType=Release) {
   def currentPath = sh(script: "pwd", returnStdout: true).trim()
-  def commit = env.GIT_COMMIT
+  def commit = GIT_COMMIT
   def artifactsPath = sprintf('%1$s/java-bindings-%2$s-%3$s-%4$s-%5$s.zip',
     [currentPath, buildType, os, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)])
   def cmakeOptions = ""
   if (os == 'windows') {
-    sh "mkdir -p /tmp/${env.GIT_COMMIT}/bindings-artifact"
+    sh "mkdir -p /tmp/${GIT_COMMIT}/bindings-artifact"
     cmakeOptions = '-DCMAKE_TOOLCHAIN_FILE=/c/Users/Administrator/Downloads/vcpkg-master/vcpkg-master/scripts/buildsystems/vcpkg.cmake -G "NMake Makefiles"'
   }
   if (os == 'linux') {
@@ -29,7 +29,7 @@ def doJavaBindings(os, packageName, buildType=Release) {
       zip -r $artifactsPath *.dll *.lib *.manifest *.exp libirohajava.so \$(echo ${packageName} | cut -d '.' -f1); \
       popd"
   if (os == 'windows') {
-    sh "cp $artifactsPath /tmp/${env.GIT_COMMIT}/bindings-artifact"
+    sh "cp $artifactsPath /tmp/${GIT_COMMIT}/bindings-artifact"
   }
   else {
     sh "cp $artifactsPath /tmp/bindings-artifact"
@@ -39,13 +39,14 @@ def doJavaBindings(os, packageName, buildType=Release) {
 
 def doPythonBindings(os, buildType=Release) {
   def currentPath = sh(script: "pwd", returnStdout: true).trim()
-  def commit = env.GIT_COMMIT
+  def commit = GIT_COMMIT
+  def version = Python2Bindings ? "python2" : "python3"
   def supportPython2 = Python2Bindings ? "ON" : "OFF"
   def artifactsPath = sprintf('%1$s/python-bindings-%2$s-%3$s-%4$s-%5$s-%6$s.zip',
-    [currentPath, env.PBVersion, buildType, os, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)])
+    [currentPath, version, buildType, os, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)])
   def cmakeOptions = ""
   if (os == 'windows') {
-    sh "mkdir -p /tmp/${env.GIT_COMMIT}/bindings-artifact"
+    sh "mkdir -p /tmp/${GIT_COMMIT}/bindings-artifact"
     cmakeOptions = '-DCMAKE_TOOLCHAIN_FILE=/c/Users/Administrator/Downloads/vcpkg-master/vcpkg-master/scripts/buildsystems/vcpkg.cmake -G "NMake Makefiles"'
   }
   if (os == 'linux') {
@@ -70,7 +71,7 @@ def doPythonBindings(os, buildType=Release) {
         --python_out=build/bindings schema/*.proto
     """
     sh """
-      ${env.PBVersion} -m grpc_tools.protoc --proto_path=schema --python_out=build/bindings \
+      ${version} -m grpc_tools.protoc --proto_path=schema --python_out=build/bindings \
         --grpc_python_out=build/bindings schema/endpoint.proto
     """
   }
@@ -81,7 +82,7 @@ def doPythonBindings(os, buildType=Release) {
         --python_out=build/bindings schema/*.proto
     """
     sh """
-      ${env.PBVersion} -m grpc_tools.protoc \
+      ${version} -m grpc_tools.protoc \
         --proto_path=/c/Users/Administrator/Downloads/vcpkg-master/vcpkg-master/buildtrees/protobuf/src/protobuf-3.5.1-win32/include \
         --proto_path=schema --python_out=build/bindings --grpc_python_out=build/bindings \
         schema/endpoint.proto
@@ -93,7 +94,7 @@ def doPythonBindings(os, buildType=Release) {
       build/bindings/*.exp build/bindings/*.manifest
     """
   if (os == 'windows') {
-    sh "cp $artifactsPath /tmp/${env.GIT_COMMIT}/bindings-artifact"
+    sh "cp $artifactsPath /tmp/${GIT_COMMIT}/bindings-artifact"
   }
   else {
     sh "cp $artifactsPath /tmp/bindings-artifact"
