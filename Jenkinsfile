@@ -6,7 +6,7 @@ properties([parameters([
   booleanParam(defaultValue: false, description: '', name: 'armv7_linux'),
   booleanParam(defaultValue: false, description: '', name: 'armv8_linux'),
   booleanParam(defaultValue: true, description: '', name: 'x86_64_macos'),
-  booleanParam(defaultValue: true, description: '', name: 'x86_64_win'),
+  booleanParam(defaultValue: false, description: '', name: 'x86_64_win'),
   booleanParam(defaultValue: true, description: 'Build Java bindings', name: 'JavaBindings'),
   choice(choices: 'Release\nDebug', description: 'Java bindings build type', name: 'JBBuildType'),
   string(defaultValue: 'tech.iroha.libiroha', description: 'Java bindings package name', name: 'JBPackageName'),
@@ -184,9 +184,9 @@ pipeline {
           steps {
             script {
               def bindings = load ".jenkinsci/bindings.groovy"
-              // if (params.JavaBindings) {
-              //   bindings.doJavaBindings('windows', params.JBPackageName, params.JBBuildType)
-              // }
+              if (params.JavaBindings) {
+                bindings.doJavaBindings('windows', params.JBPackageName, params.JBBuildType)
+              }
               if (params.Python2Bindings) {
                 bindings.doPythonBindings('windows', params.PBBuildType)
               }
@@ -199,10 +199,10 @@ pipeline {
             success {
               script {
                 def artifacts = load ".jenkinsci/artifacts.groovy"
-                // if (params.JavaBindings) {
-                //   javaBindingsFilePaths = [ 'java-bindings-*.zip' ]
-                //   artifacts.uploadArtifacts(javaBindingsFilePaths, 'libiroha/bindings/java')
-                // }
+                if (params.JavaBindings) {
+                  javaBindingsFilePaths = [ 'java-bindings-*.zip' ]
+                  artifacts.uploadArtifacts(javaBindingsFilePaths, 'libiroha/bindings/java')
+                }
                 if (params.Python2Bindings || params.Python2Bindings) {
                   pythonBindingsFilePaths = [ 'python-bindings-*.zip' ]
                   artifacts.uploadArtifacts(pythonBindingsFilePaths, 'libiroha/bindings/python')
