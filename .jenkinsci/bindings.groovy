@@ -41,7 +41,7 @@ def doPythonBindings(PBversion, os, buildType=Release) {
   def currentPath = sh(script: "pwd", returnStdout: true).trim()
   def commit = GIT_COMMIT
   def supportPython2 = PBversion == "2" ? "ON" : "OFF"
-  def supportPython2 = PBversion == "2" ? "python2" : "python3"
+  def version = PBversion == "2" ? "python2" : "python3"
   def artifactsPath = sprintf('%1$s/python-bindings-%2$s-%3$s-%4$s-%5$s-%6$s.zip',
     [currentPath, version, buildType, os, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)])
   def cmakeOptions = ""
