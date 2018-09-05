@@ -11,7 +11,7 @@ properties([parameters([
   choice(choices: 'Release\nDebug', description: 'Java bindings build type', name: 'JBBuildType'),
   string(defaultValue: 'tech.iroha.libiroha', description: 'Java bindings package name', name: 'JBPackageName'),
   booleanParam(defaultValue: true, description: 'Build Python2 bindings', name: 'Python2Bindings'),
-  booleanParam(defaultValue: true, description: 'Build Python3 bindings', name: 'Python3Bindings'),
+  booleanParam(defaultValue: false, description: 'Build Python3 bindings', name: 'Python3Bindings'),
   choice(choices: 'Release\nDebug', description: 'Python bindings build type', name: 'PBBuildType'),
   string(defaultValue: '4', description: 'How much parallelism should we exploit. "4" is optimal for machines with modest amount of memory and at least 4 cores', name: 'PARALLELISM')])])
 
