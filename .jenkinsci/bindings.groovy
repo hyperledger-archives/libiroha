@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 
-def doJavaBindings(os, packageName, buildType=Release) {
+def doJavaBindings(os, packageName, buildType="Release") {
   def currentPath = sh(script: "pwd", returnStdout: true).trim()
   def commit = GIT_COMMIT
   def artifactsPath = sprintf('%1$s/java-bindings-%2$s-%3$s-%4$s-%5$s.zip',
@@ -37,7 +37,7 @@ def doJavaBindings(os, packageName, buildType=Release) {
   return artifactsPath
 }
 
-def doPythonBindings(PBversion, os, buildType=Release) {
+def doPythonBindings(PBversion, os, buildType="Release") {
   def currentPath = sh(script: "pwd", returnStdout: true).trim()
   def commit = GIT_COMMIT
   def supportPython2 = PBversion == "2" ? "ON" : "OFF"
