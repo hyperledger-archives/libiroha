@@ -78,9 +78,11 @@ pipeline {
           }
           post {    
             cleanup {
-              def cleanup = load ".jenkinsci/docker-cleanup.groovy"
-              cleanup.doDockerCleanup()
-              cleanWs()
+              script {
+                def cleanup = load ".jenkinsci/docker-cleanup.groovy"
+                cleanup.doDockerCleanup()
+                cleanWs()
+              }
             }
           }
         }
@@ -99,8 +101,11 @@ pipeline {
           post {
             always {
               script {
-                post = load ".jenkinsci/mac-post-step.groovy"
-                post.macPostStep()
+                cleanWs()
+                sh """
+                    pg_ctl -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ stop && \
+                    rm -rf /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/
+                """
               }
             }
           }
