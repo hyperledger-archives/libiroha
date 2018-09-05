@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 
-def uploadArtifacts(filePaths, uploadPath, artifactServers=['artifact.soramitsu.co.jp']) {
+def uploadArtifacts(filePaths, uploadPath, artifactServers=['nexus.iroha.tech']) {
   def filePathsConverted = []
   agentType = sh(script: 'uname', returnStdout: true).trim()
   filePaths.each {
@@ -36,7 +36,7 @@ def uploadArtifacts(filePaths, uploadPath, artifactServers=['artifact.soramitsu.
   }
   withCredentials([usernamePassword(credentialsId: 'ci_nexus', passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')]) {
     artifactServers.each {
-      sh(script: "while read line; do curl -v -u ${NEXUS_USER}:${NEXUS_PASS} --upload-file \$line https://nexus.iroha.tech/repository/artifacts/${uploadPath}/ ; done < \$(pwd)/batch.txt")
+      sh(script: "while read line; do curl -v -u ${NEXUS_USER}:${NEXUS_PASS} --upload-file \$line https://${it}/repository/artifacts/${uploadPath}/ ; done < \$(pwd)/batch.txt")
     }
   }
 }

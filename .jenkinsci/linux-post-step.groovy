@@ -1,7 +1,7 @@
 def linuxPostStep() {
   timeout(time: 600, unit: "SECONDS") {
     try {
-      // if (currentBuild.currentResult == "SUCCESS" && env.GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+      if (currentBuild.currentResult == "SUCCESS" && env.GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
         def artifacts = load ".jenkinsci/artifacts.groovy"
         def commit = env.GIT_COMMIT
         def platform = sh(script: 'uname -m', returnStdout: true).trim()
@@ -13,7 +13,7 @@ def linuxPostStep() {
     finally {
       def cleanup = load ".jenkinsci/docker-cleanup.groovy"
       cleanup.doDockerCleanup()
-      // cleanWs()
+      cleanWs()
     }
   }
 }

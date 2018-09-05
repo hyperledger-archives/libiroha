@@ -40,7 +40,7 @@ def doJavaBindings(os, packageName, buildType=Release) {
 def doPythonBindings(os, buildType=Release) {
   def currentPath = sh(script: "pwd", returnStdout: true).trim()
   def commit = env.GIT_COMMIT
-  def supportPython2 = "OFF"
+  def supportPython2 = Python2Bindings ? "ON" : "OFF"
   def artifactsPath = sprintf('%1$s/python-bindings-%2$s-%3$s-%4$s-%5$s-%6$s.zip',
     [currentPath, env.PBVersion, buildType, os, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)])
   def cmakeOptions = ""
@@ -52,7 +52,6 @@ def doPythonBindings(os, buildType=Release) {
     // do not use preinstalled libed25519
     sh "rm -rf /usr/local/include/ed25519*; unlink /usr/local/lib/libed25519.so; rm -f /usr/local/lib/libed25519.so.1.2.2"
   }
-  if (env.PBVersion == "python2") { supportPython2 = "ON" }
   sh """
     cmake . \
       -Bbuild \
@@ -99,31 +98,6 @@ def doPythonBindings(os, buildType=Release) {
   else {
     sh "cp $artifactsPath /tmp/bindings-artifact"
   }
-  return artifactsPath
-}
-
-def doAndroidBindings(abiVersion) {
-  def currentPath = sh(script: "pwd", returnStdout: true).trim()
-  def commit = env.GIT_COMMIT
-  def artifactsPath = sprintf('%1$s/android-bindings-%2$s-%3$s-%4$s-%5$s-%6$s.zip',
-    [currentPath, "\$PLATFORM", abiVersion, "\$BUILD_TYPE_A", sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)])
-
-  
-  sh """
-    . docker/android/entrypoint.sh; \
-    sed -i.bak "s~find_package(JNI REQUIRED)~SET(CMAKE_SWIG_FLAGS \\\${CMAKE_SWIG_FLAGS} -package \${PACKAGE})~" bindings/CMakeLists.txt; \
-    # TODO: might not be needed in the future
-    sed -i.bak "/target_include_directories(\\\${SWIG_MODULE_irohajava_REAL_NAME} PUBLIC/,+3d" bindings/CMakeLists.txt; \
-    sed -i.bak "s~swig_link_libraries(irohajava~swig_link_libraries(irohajava \"/protobuf/.build/lib\${PROTOBUF_LIB_NAME}.a\" \"\${NDK_PATH}/platforms/android-$abiVersion/\${ARCH}/usr/\${LIBP}/liblog.so\"~" bindings/CMakeLists.txt; \
-    sed -i.bak "s~find_library(protobuf_LIBRARY protobuf)~find_library(protobuf_LIBRARY \${PROTOBUF_LIB_NAME})~" cmake/Modules/Findprotobuf.cmake; \
-    sed -i.bak "s~find_program(protoc_EXECUTABLE protoc~set(protoc_EXECUTABLE \"/protobuf/host_build/protoc\"~" cmake/Modules/Findprotobuf.cmake; \
-    cmake . -Bbuild -DCMAKE_SYSTEM_NAME=Android -DCMAKE_SYSTEM_VERSION=$abiVersion -DCMAKE_ANDROID_ARCH_ABI=\$PLATFORM \
-      -DANDROID_NDK=\$NDK_PATH -DCMAKE_ANDROID_STL_TYPE=c++_static -DCMAKE_BUILD_TYPE=\$BUILD_TYPE_A -DTESTING=OFF \
-      -DSWIG_JAVA=ON -DCMAKE_PREFIX_PATH=\$DEPS_DIR
-    """
-  sh "cmake --build build --target irohajava -- -j${params.PARALLELISM}"
-  sh "zip -j $artifactsPath build/bindings/*.java build/bindings/libirohajava.so"
-  sh "cp $artifactsPath /tmp/bindings-artifact"
   return artifactsPath
 }
 
