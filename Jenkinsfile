@@ -73,19 +73,18 @@ pipeline {
             beforeAgent true
             expression { return params.x86_64_linux }
           }
-          environment {
-            debugBuild = load ".jenkinsci/linux-debug-build.groovy"
-          }
           agent { label 'docker_1' }
           steps {
             script {
+              debugBuild = load ".jenkinsci/linux-debug-build.groovy"
               debugBuild.doDebugBuild()
             }
           }
           post {
             always {
               script {
-                debugBuild.linuxPostStep()
+                post = load ".jenkinsci/linux-post-step.groovy"
+                post.linuxPostStep()
               }
             }
           }
@@ -95,19 +94,18 @@ pipeline {
             beforeAgent true
             expression { return params.x86_64_macos }
           }
-          environment {
-            debugBuild = load ".jenkinsci/mac-debug-build.groovy"
-          }
           agent { label 'mac' }
           steps {
             script {
+              debugBuild = load ".jenkinsci/mac-debug-build.groovy"
               debugBuild.doDebugBuild()
             }
           }
           post {
             always {
               script {
-                debugBuild.macPostStep()
+                post = load ".jenkinsci/mac-post-step.groovy"
+                post.macPostStep()
               }
             }
           }
