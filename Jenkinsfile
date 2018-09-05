@@ -145,12 +145,12 @@ pipeline {
               }
               if (params.Python2Bindings) {
                 iC.inside() {
-                  bindings.doPythonBindings('linux', params.PBBuildType)
+                  bindings.doPythonBindings('2', 'linux', params.PBBuildType)
                 }
               }
               if (params.Python3Bindings) {
                 iC.inside() {
-                  bindings.doPythonBindings('linux', params.PBBuildType)
+                  bindings.doPythonBindings('3', 'linux', params.PBBuildType)
                 }
               }
             }
@@ -184,9 +184,9 @@ pipeline {
           steps {
             script {
               def bindings = load ".jenkinsci/bindings.groovy"
-              if (params.JavaBindings) {
-                bindings.doJavaBindings('windows', params.JBPackageName, params.JBBuildType)
-              }
+              // if (params.JavaBindings) {
+              //   bindings.doJavaBindings('windows', params.JBPackageName, params.JBBuildType)
+              // }
               if (params.Python2Bindings) {
                 bindings.doPythonBindings('windows', params.PBBuildType)
               }
@@ -199,10 +199,10 @@ pipeline {
             success {
               script {
                 def artifacts = load ".jenkinsci/artifacts.groovy"
-                if (params.JavaBindings) {
-                  javaBindingsFilePaths = [ 'java-bindings-*.zip' ]
-                  artifacts.uploadArtifacts(javaBindingsFilePaths, 'libiroha/bindings/java')
-                }
+                // if (params.JavaBindings) {
+                //   javaBindingsFilePaths = [ 'java-bindings-*.zip' ]
+                //   artifacts.uploadArtifacts(javaBindingsFilePaths, 'libiroha/bindings/java')
+                // }
                 if (params.Python2Bindings || params.Python2Bindings) {
                   pythonBindingsFilePaths = [ 'python-bindings-*.zip' ]
                   artifacts.uploadArtifacts(pythonBindingsFilePaths, 'libiroha/bindings/python')
