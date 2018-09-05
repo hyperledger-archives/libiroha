@@ -1,11 +1,11 @@
 properties([parameters([
   booleanParam(defaultValue: true, description: 'Build `iroha`', name: 'iroha'),
   choice(choices: 'Debug\nRelease', description: 'Iroha build type', name: 'build_type'),
-  booleanParam(defaultValue: true, description: 'Build `bindings`', name: 'bindings'),
+  booleanParam(defaultValue: false, description: 'Build `bindings`', name: 'bindings'),
   booleanParam(defaultValue: true, description: '', name: 'x86_64_linux'),
   booleanParam(defaultValue: false, description: '', name: 'armv7_linux'),
   booleanParam(defaultValue: false, description: '', name: 'armv8_linux'),
-  booleanParam(defaultValue: true, description: '', name: 'x86_64_macos'),
+  booleanParam(defaultValue: false, description: '', name: 'x86_64_macos'),
   booleanParam(defaultValue: false, description: '', name: 'x86_64_win'),
   booleanParam(defaultValue: true, description: 'Build Java bindings', name: 'JavaBindings'),
   choice(choices: 'Release\nDebug', description: 'Java bindings build type', name: 'JBBuildType'),
@@ -50,17 +50,17 @@ pipeline {
           // need this for develop->master PR cases
           // CHANGE_BRANCH is not defined if this is a branch build
           try {
-            env.CHANGE_BRANCH_LOCAL = CHANGE_BRANCH
+            CHANGE_BRANCH_LOCAL = CHANGE_BRANCH
           }
           catch(MissingPropertyException e) { }
-          if (env.GIT_LOCAL_BRANCH != "develop" && env.CHANGE_BRANCH_LOCAL != "develop") {
+          if (GIT_LOCAL_BRANCH != "develop" && CHANGE_BRANCH_LOCAL != "develop") {
             def builds = load ".jenkinsci/cancel-builds-same-job.groovy"
             builds.cancelSameJobBuilds()
           }
         }
       }
     }
-    stage('Build Debug') {
+    stage('Build native library') {
       when {
         allOf {
           expression { params.build_type == 'Debug' }
@@ -73,125 +73,17 @@ pipeline {
             beforeAgent true
             expression { return params.x86_64_linux }
           }
-          agent { label 'x86_64' }
+          debugBuild = load ".jenkinsci/linux-debug-build.groovy"
+          agent { label 'docker_1' }
           steps {
             script {
-              debugBuild = load ".jenkinsci/debug-build.groovy"
               debugBuild.doDebugBuild()
-              // if (env.GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
-                releaseBuild = load ".jenkinsci/release-build.groovy"
-                releaseBuild.doReleaseBuild()
-              // }
             }
           }
           post {
             always {
               script {
-                post = load ".jenkinsci/linux-post-step.groovy"
-                post.linuxPostStep()
-              }
-            }
-          }
-        }
-        stage('x86_64_macos'){
-          when {
-            beforeAgent true
-            expression { return params.x86_64_macos }
-          }
-          agent { label 'mac' }
-          steps {
-            script {
-              def cmakeOptions = ""
-              def scmVars = checkout scm
-              IROHA_VERSION = "0x${scmVars.GIT_COMMIT}"
-              IROHA_HOME = "/opt/iroha"
-              IROHA_BUILD = "${IROHA_HOME}/build"
-
-              sh """
-                ccache --version
-                ccache --show-stats
-                ccache --zero-stats
-                ccache --max-size=5G
-              """
-              sh """
-                cmake \
-                  -DTESTING=ON \
-                  -H. \
-                  -Bbuild \
-                  -DCMAKE_BUILD_TYPE=${params.build_type} \
-                  -DIROHA_VERSION=${IROHA_VERSION} \
-                  ${cmakeOptions}
-              """
-              sh "cmake --build build -- -j${params.PARALLELISM}"
-              sh "ccache --show-stats"
-              sh """
-                export IROHA_POSTGRES_PASSWORD=${IROHA_POSTGRES_PASSWORD}; \
-                export IROHA_POSTGRES_USER=${IROHA_POSTGRES_USER}; \
-                mkdir -p /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}; \
-                initdb -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ -U ${IROHA_POSTGRES_USER} --pwfile=<(echo ${IROHA_POSTGRES_PASSWORD}); \
-                pg_ctl -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ -o '-p 5433' -l /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/events.log start; \
-                psql -h localhost -d postgres -p 5433 -U ${IROHA_POSTGRES_USER} --file=<(echo create database ${IROHA_POSTGRES_USER};)
-              """
-              def testExitCode = sh(script: """cd build && IROHA_POSTGRES_HOST=localhost IROHA_POSTGRES_PORT=5433 ctest --output-on-failure """, returnStatus: true)
-              if (testExitCode != 0) {
-                currentBuild.result = "UNSTABLE"
-              }
-              // if (env.GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
-                releaseBuild = load ".jenkinsci/mac-release-build.groovy"
-                releaseBuild.doReleaseBuild()
-              // }
-            }
-          }
-          post {
-            always {
-              script {
-                timeout(time: 600, unit: "SECONDS") {
-                  try {
-                    // if (currentBuild.currentResult == "SUCCESS" && env.GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
-                      def artifacts = load ".jenkinsci/artifacts.groovy"
-                      def commit = GIT_COMMIT
-                      filePaths = [ 'build/*.tar.gz' ]
-                      sh "ls -al build"
-                      artifacts.uploadArtifacts(filePaths, sprintf('libiroha/macos/%1$s-%2$s-%3$s', [env.GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.take(6)]))
-                    // }
-                  }
-                  finally {
-                    cleanWs()
-                    sh """
-                      pg_ctl -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ stop && \
-                      rm -rf /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/
-                    """
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    stage('Build Release') {
-      when {
-        expression { params.build_type == 'Release' }
-        expression { return params.iroha }
-      }
-      parallel {
-        stage('x86_64_linux') {
-          when {
-            beforeAgent true
-            expression { return params.x86_64_linux }
-          }
-          agent { label 'x86_64' }
-          steps {
-            script {
-              def releaseBuild = load ".jenkinsci/release-build.groovy"
-              releaseBuild.doReleaseBuild()
-            }
-          }
-          post {
-            always {
-              script {
-                post = load ".jenkinsci/linux-post-step.groovy"
-                post.linuxPostStep()
+                debugBuild.linuxPostStep()
               }
             }
           }
@@ -201,29 +93,17 @@ pipeline {
             beforeAgent true
             expression { return params.x86_64_macos }
           }
+          debugBuild = load ".jenkinsci/mac-debug-build.groovy"
           agent { label 'mac' }
           steps {
             script {
-              def releaseBuild = load ".jenkinsci/mac-release-build.groovy"
-              releaseBuild.doReleaseBuild()
+              debugBuild.doDebugBuild()
             }
           }
           post {
             always {
               script {
-                timeout(time: 600, unit: "SECONDS") {
-                  try {
-                    if (currentBuild.currentResult == "SUCCESS" && env.GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
-                      def artifacts = load ".jenkinsci/artifacts.groovy"
-                      def commit = GIT_COMMIT
-                      filePaths = [ '\$(pwd)/build/*.tar.gz' ]
-                      artifacts.uploadArtifacts(filePaths, sprintf('libiroha/macos/%1$s-%2$s-%3$s', [env.GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.take(6)]))
-                    }
-                  }
-                  finally {
-                    cleanWs()
-                  }
-                }
+                debugBuild.macPostStep()
               }
             }
           }
