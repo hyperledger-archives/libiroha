@@ -69,7 +69,7 @@ pipeline {
             beforeAgent true
             expression { return params.x86_64_linux }
           }
-          agent { label 'docker_1' }
+          agent { label 'x86_64' }
           steps {
             script {
               debugBuild = load ".jenkinsci/linux-debug-build.groovy"
