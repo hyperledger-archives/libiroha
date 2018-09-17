@@ -9,7 +9,7 @@ properties([parameters([
   booleanParam(defaultValue: false, description: '', name: 'x86_64_win'),
   booleanParam(defaultValue: true, description: 'Build Java bindings', name: 'JavaBindings'),
   choice(choices: 'Release\nDebug', description: 'Java bindings build type', name: 'JBBuildType'),
-  string(defaultValue: 'tech.iroha.libiroha', description: 'Java bindings package name', name: 'JBPackageName'),
+  string(defaultValue: 'jp.co.soramitsu.iroha', description: 'Java bindings package name', name: 'JBPackageName'),
   booleanParam(defaultValue: true, description: 'Build Python2 bindings', name: 'Python2Bindings'),
   booleanParam(defaultValue: false, description: 'Build Python3 bindings', name: 'Python3Bindings'),
   choice(choices: 'Release\nDebug', description: 'Python bindings build type', name: 'PBBuildType'),
