@@ -26,7 +26,7 @@ def doDebugBuild(coverageEnabled=false) {
                                            ['PARALLELISM': parallelism])
   // push Docker image in case the current branch is develop,
   // or it is a commit into PR which base branch is develop (usually develop -> master)
-  if ((env.GIT_LOCAL_BRANCH == 'develop' || CHANGE_BRANCH_LOCAL == 'develop') && manifest.manifestSupportEnabled()) {
+  if ((env.GIT_LOCAL_BRANCH == 'develop' || env.CHANGE_BRANCH_LOCAL == 'develop') && manifest.manifestSupportEnabled()) {
     manifest.manifestCreate("${env.DOCKER_REGISTRY_BASENAME}:develop-build",
       ["${env.DOCKER_REGISTRY_BASENAME}:x86_64-develop-build",
        "${env.DOCKER_REGISTRY_BASENAME}:armv7l-develop-build",
